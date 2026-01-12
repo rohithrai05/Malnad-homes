@@ -1,3 +1,4 @@
+
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -9,7 +10,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // Securely map the process.env.API_KEY used in your code to the environment variable provided by Vercel
+      // Map process.env.API_KEY from environment variables to the client
       'process.env.API_KEY': JSON.stringify(env.API_KEY)
     },
     build: {
