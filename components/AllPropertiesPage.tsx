@@ -168,8 +168,7 @@ export const AllPropertiesPage: React.FC<AllPropertiesPageProps> = ({ onBack, in
     });
 
     if (userLocation) {
-      // Use any to bypass TS error on distance property assignment
-      result = (result as any[]).map(p => ({ ...p, distance: calculateDistance(userLocation.lat, userLocation.lng, p.coordinates.lat, p.coordinates.lng) }))
+      result = result.map(p => ({ ...p, distance: calculateDistance(userLocation.lat, userLocation.lng, p.coordinates.lat, p.coordinates.lng) }))
         .sort((a: any, b: any) => a.distance - b.distance);
     } else {
       result.sort((a, b) => {
@@ -382,7 +381,7 @@ export const AllPropertiesPage: React.FC<AllPropertiesPageProps> = ({ onBack, in
                     key={p.id} 
                     property={p} 
                     onClick={() => onViewProperty(p)} 
-                    distance={(p as any).distance} 
+                    distance={p.distance} 
                   />
                 ))}
               </div>

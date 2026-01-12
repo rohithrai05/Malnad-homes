@@ -134,6 +134,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     );
   };
 
+  const notifications = [
+    { id: 1, text: "New listing approved in Bolwar.", time: "2h ago", unread: true },
+    { id: 2, text: "Welcome to Malnad Homes!", time: "1d ago", unread: false },
+  ];
+
   const handleHomeClick = () => {
     if (onHome) {
       onHome();
@@ -141,11 +146,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       setIsSearchOpen(false);
     }
   };
-
-  const notifications = [
-    { id: 1, text: "New listing approved in Bolwar.", time: "2h ago", unread: true },
-    { id: 2, text: "Welcome to Malnad Homes!", time: "1d ago", unread: false },
-  ];
 
   return (
     <>
@@ -159,29 +159,23 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 md:h-16">
             
-            {/* BRAND LOGO UNIT - NEW MODERN DESIGN */}
+            {/* Logo Group */}
             <div 
-              className="flex items-center gap-2.5 md:gap-4 cursor-pointer group shrink-0" 
+              className="flex items-center space-x-2 md:space-x-3 cursor-pointer group shrink-0" 
               onClick={handleHomeClick}
             >
-              <div className="relative h-10 w-10 md:h-12 md:w-12 bg-gradient-to-br from-emerald-600 to-teal-800 rounded-xl md:rounded-2xl p-2 md:p-2.5 shadow-xl shadow-emerald-500/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-emerald-500/40 flex items-center justify-center overflow-hidden">
-                 {/* Modern Minimalist "M-House" Monogram */}
-                 <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white drop-shadow-md">
-                    {/* The Architecture Line (M + Roof) */}
-                    <path d="M6 30L14 12L22 30M16 30L24 12L34 30" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                    {/* The Golden Sun (Malnad Sun) */}
-                    <circle cx="28" cy="12" r="4" fill="#fbbf24" className="animate-pulse" />
-                    {/* Structural negative space */}
-                    <path d="M20 30V26" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-40" />
+              <div className="relative h-9 w-9 md:h-11 md:w-11 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl p-1.5 md:p-2 shadow-lg shadow-emerald-500/20 transition-all duration-300 group-hover:shadow-emerald-500/40 group-hover:scale-105 flex items-center justify-center">
+                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white">
+                    <path d="M3 10L12 2L21 10V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V10Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-70"/>
                  </svg>
-                 <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
-              <div className="flex flex-col -space-y-1 md:-space-y-2">
-                <span className={`font-serif text-lg md:text-2xl font-bold tracking-tight transition-colors duration-300 ${isScrolled ? 'text-slate-900 dark:text-white' : 'text-white'}`}>
-                  Malnad<span className="font-sans font-black text-emerald-500 uppercase tracking-widest ml-1 text-xs md:text-base">Homes</span>
+              <div className="flex flex-col -space-y-1">
+                <span className={`font-serif text-lg md:text-2xl font-bold tracking-tight ${isScrolled ? 'text-slate-900 dark:text-white' : 'text-white'}`}>
+                  Malnad<span className="text-emerald-500">Homes</span>
                 </span>
-                <span className={`text-[7px] md:text-[9px] uppercase font-black tracking-[0.4em] hidden sm:block ${isScrolled ? 'text-slate-400' : 'text-slate-300'}`}>
-                  Verified Agency Portfolio
+                <span className={`text-[8px] md:text-[10px] uppercase font-black tracking-[0.2em] hidden sm:block ${isScrolled ? 'text-slate-500' : 'text-slate-300'}`}>
+                  Verified Stays
                 </span>
               </div>
             </div>
@@ -258,6 +252,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Action Bar (Right Side) */}
             <div className="flex items-center space-x-1.5 md:space-x-3">
+              {/* Search Toggle (Desktop) */}
               <button 
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className={`hidden lg:flex p-2.5 rounded-xl transition-all ${
@@ -299,7 +294,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </div>
 
-              {/* User Menu */}
+              {/* User Menu / Profile */}
               <div className="hidden md:flex items-center">
                 <div className={`h-8 w-px mx-3 ${isScrolled ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white/20'}`}></div>
                 {isAuthenticated && user ? (
@@ -361,7 +356,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
 
               {/* Mobile Menu Toggles */}
-              <div className="md:hidden flex items-center gap-1.5">
+              <div className="md:hidden flex items-center gap-1">
                 <button 
                   onClick={() => setIsSearchOpen(!isSearchOpen)}
                   className={`p-2.5 rounded-xl transition-all active:scale-90 ${isScrolled ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' : 'bg-white/10 text-white backdrop-blur-md'}`}

@@ -12,34 +12,33 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           
           <div className="col-span-1 md:col-span-1">
-            <div className="flex items-center gap-4 mb-8 group">
-              {/* Modern Monogram Icon */}
-              <div className="relative h-14 w-14 bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl p-2.5 shadow-2xl shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300 flex items-center justify-center">
-                 <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white">
-                    <path d="M6 30L14 12L22 30M16 30L24 12L34 30" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="28" cy="12" r="4" fill="#fbbf24" />
+            <div className="flex items-center space-x-3 mb-6 group">
+              {/* Custom Modern Logo */}
+              <div className="relative h-12 w-12 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl p-2.5 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300 flex items-center justify-center">
+                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white">
+                    <path d="M3 10L12 2L21 10V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-90"/>
+                    <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-90"/>
+                    {/* Leaf Accent */}
+                    <path d="M12 2C12 2 16 5 16 9C16 10.5 15 11 15 11" stroke="#a7f3d0" strokeWidth="2" strokeLinecap="round"/>
                  </svg>
               </div>
-              <div className="flex flex-col -space-y-1">
-                <span className="font-serif text-2xl font-bold text-white tracking-wide">
-                  Malnad<span className="font-sans font-black text-emerald-500 uppercase tracking-widest ml-1 text-base">Homes</span>
-                </span>
-                <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">AGENCY PORTFOLIO</span>
-              </div>
+              <span className="font-serif text-xl font-bold text-white tracking-wide">
+                Malnad<span className="text-emerald-500">Homes</span>
+              </span>
             </div>
-            <p className="text-sm leading-relaxed mb-8 pr-4">
-              {t('footer.tagline')} Malnad's premier platform for verified student and professional accommodations.
+            <p className="text-sm leading-relaxed mb-6">
+              {t('footer.tagline')}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="p-2.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all"><Instagram className="h-5 w-5" /></a>
-              <a href="#" className="p-2.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all"><Twitter className="h-5 w-5" /></a>
-              <a href="#" className="p-2.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all"><Facebook className="h-5 w-5" /></a>
-              <a href="#" className="p-2.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all"><Linkedin className="h-5 w-5" /></a>
+              <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors"><Instagram className="h-5 w-5" /></a>
+              <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors"><Twitter className="h-5 w-5" /></a>
+              <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors"><Facebook className="h-5 w-5" /></a>
+              <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors"><Linkedin className="h-5 w-5" /></a>
             </div>
           </div>
 
           <div>
-            <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">{t('footer.company')}</h4>
+            <h4 className="text-white font-bold mb-6">{t('footer.company')}</h4>
             <ul className="space-y-3 text-sm">
               <li><a href="#" className="hover:text-emerald-400 transition-colors">{t('footer.aboutUs')}</a></li>
               <li><a href="#" className="hover:text-emerald-400 transition-colors">{t('footer.careers')}</a></li>
@@ -49,7 +48,7 @@ export const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">{t('footer.services')}</h4>
+            <h4 className="text-white font-bold mb-6">{t('footer.services')}</h4>
             <ul className="space-y-3 text-sm">
               <li><a href="#" className="hover:text-emerald-400 transition-colors">{t('footer.listingMgmt')}</a></li>
               <li><a href="#" className="hover:text-emerald-400 transition-colors">{t('footer.workflowAuto')}</a></li>
@@ -59,18 +58,18 @@ export const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">{t('footer.contact')}</h4>
+            <h4 className="text-white font-bold mb-6">{t('footer.contact')}</h4>
             <ul className="space-y-4 text-sm">
               <li className="flex items-start">
-                <div className="p-2 rounded-lg bg-emerald-500/10 mr-3 shrink-0"><MapPin className="h-4 w-4 text-emerald-500" /></div>
+                <MapPin className="h-5 w-5 mr-3 text-emerald-500 shrink-0" />
                 <span>12 Estate Road, Chikmagalur, Karnataka, India 577101</span>
               </li>
               <li className="flex items-center">
-                <div className="p-2 rounded-lg bg-emerald-500/10 mr-3 shrink-0"><Phone className="h-4 w-4 text-emerald-500" /></div>
+                <Phone className="h-5 w-5 mr-3 text-emerald-500 shrink-0" />
                 <span>+91 98765 43210</span>
               </li>
               <li className="flex items-center">
-                <div className="p-2 rounded-lg bg-emerald-500/10 mr-3 shrink-0"><Mail className="h-4 w-4 text-emerald-500" /></div>
+                <Mail className="h-5 w-5 mr-3 text-emerald-500 shrink-0" />
                 <span>hello@malnadhomes.in</span>
               </li>
             </ul>
@@ -78,11 +77,11 @@ export const Footer: React.FC = () => {
 
         </div>
 
-        <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center text-[10px] md:text-xs font-bold uppercase tracking-[0.2em]">
-          <p className="text-slate-500">© {new Date().getFullYear()} {t('footer.rights')}</p>
-          <div className="flex space-x-8 mt-6 md:mt-0">
-            <a href="#" className="text-slate-500 hover:text-white transition-colors">{t('footer.privacy')}</a>
-            <a href="#" className="text-slate-500 hover:text-white transition-colors">{t('footer.terms')}</a>
+        <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center text-xs">
+          <p>© {new Date().getFullYear()} {t('footer.rights')}</p>
+          <div className="flex space-x-6 mt-4 md:mt-0">
+            <a href="#" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
+            <a href="#" className="hover:text-white transition-colors">{t('footer.terms')}</a>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Mail, Lock, User, ArrowRight, AlertCircle, Camera, Upload, CheckCircle, KeyRound, ShieldCheck, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Mail, Lock, User, ArrowRight, AlertCircle, Camera, Upload, CheckCircle, KeyRound } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './Button';
 
@@ -15,8 +15,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [mode, setMode] = useState<AuthMode>('login');
   const { login, loginWithGoogle, signup, resetPassword } = useAuth();
   const [loading, setLoading] = useState(false);
-  // Fix: Defined fileInputRef using useRef
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
@@ -26,6 +24,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   });
   const [error, setError] = useState('');
 
+  // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
       setMode('login');
@@ -39,11 +38,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
     if (mode === 'signup' && formData.password !== formData.repeatPassword) {
       setError("Passwords do not match");
       return;
     }
+
     setLoading(true);
+
     try {
       if (mode === 'login') {
         await login(formData.email, formData.password);
@@ -51,14 +53,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       } else if (mode === 'signup') {
         if (!formData.name) throw new Error("Name is required");
         await signup(formData.name, formData.email, formData.password, formData.photo);
+        // On successful signup, switch to verify mode
         setMode('verify');
       } else if (mode === 'forgotPassword') {
         await resetPassword(formData.email);
         setMode('resetSent');
       }
     } catch (err: any) {
-      if (err.message === "Email not verified") setMode('verify');
-      else setError(err.message || 'Authentication failed. Please try again.');
+      if (err.message === "Email not verified") {
+        setMode('verify');
+      } else {
+        setError(err.message || 'Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -71,7 +77,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       await loginWithGoogle();
       onClose();
     } catch (err: any) {
-      if (err.message !== "Sign in cancelled") setError(err.message || 'Google sign in failed');
+      if (err.message !== "Sign in cancelled") {
+         setError(err.message || 'Google sign in failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -83,219 +91,327 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const switchToLogin = () => { setMode('login'); setError(''); };
-  const switchToSignup = () => { setMode('signup'); setError(''); };
+  const switchToLogin = () => {
+    setMode('login');
+    setError('');
+  };
 
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-0 md:p-4">
-      <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-in fade-in duration-500" onClick={onClose}></div>
-      
-      <div className="relative w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] bg-white dark:bg-slate-900 md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 slide-in-from-bottom-10 md:slide-in-from-bottom-0 duration-500">
-        
-        {/* Branding Sidebar (Desktop Only) */}
-        <div className="hidden md:flex w-2/5 bg-slate-950 relative overflow-hidden flex-col justify-between p-12">
-           <div className="absolute inset-0 z-0">
-              <img 
-                src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=800" 
-                className="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-1000" 
-                alt="Malnad View"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
-           </div>
-           
-           <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-8">
-                 <div className="h-10 w-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                    <ShieldCheck className="h-6 w-6" />
-                 </div>
-                 <span className="font-serif text-xl font-bold text-white tracking-tight">Malnad Homes</span>
-              </div>
-              <h2 className="text-4xl font-serif font-bold text-white leading-tight mb-6">
-                 Elevate your <br/>
-                 <span className="text-emerald-400">Living standard.</span>
-              </h2>
-              <div className="space-y-4">
-                 <div className="flex items-center gap-3 text-slate-300 text-sm">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" /> Verified Property Listings
-                 </div>
-                 <div className="flex items-center gap-3 text-slate-300 text-sm">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" /> Direct Owner Interaction
-                 </div>
-                 <div className="flex items-center gap-3 text-slate-300 text-sm">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" /> Zero Brokerage Policy
-                 </div>
-              </div>
-           </div>
+  const switchToSignup = () => {
+    setMode('signup');
+    setError('');
+    setFormData({ name: '', email: '', password: '', repeatPassword: '', photo: null });
+  };
 
-           <div className="relative z-10 pt-8 border-t border-white/10">
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">Trusted by</p>
-              <p className="text-sm text-slate-300">500+ professionals and students in Puttur.</p>
-           </div>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 bg-white dark:bg-slate-900 p-6 md:p-12 overflow-y-auto custom-scrollbar flex flex-col">
-          <div className="flex justify-between items-center mb-8 md:hidden">
-             <span className="font-serif font-bold text-slate-900 dark:text-white">Malnad Homes</span>
-             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500"><X className="h-5 w-5" /></button>
+  // Verification Screen
+  if (mode === 'verify') {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={onClose}></div>
+        <div className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 p-8 text-center">
+          <button onClick={onClose} className="absolute right-5 top-5 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-full">
+            <X className="h-5 w-5" />
+          </button>
+          
+          <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Mail className="h-8 w-8 text-emerald-500" />
           </div>
           
-          <button onClick={onClose} className="hidden md:flex absolute right-8 top-8 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
-            <X className="h-6 w-6" />
-          </button>
+          <h2 className="text-2xl font-serif font-bold text-slate-900 dark:text-white mb-4">Verify Your Email</h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+            We have sent a verification email to <span className="text-emerald-500 font-medium">{formData.email}</span>. 
+            Please verify it and log in to continue.
+          </p>
 
-          <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
-            <div className="mb-8 text-center md:text-left">
-              <h3 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
-                {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
-              </h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">
-                {mode === 'login' ? 'Log in to manage your stays and favorites.' : 'Start your journey with Malnad\'s trusted agency.'}
-              </p>
+          <Button 
+            onClick={switchToLogin} 
+            className="w-full"
+            size="lg"
+          >
+            Back to Log In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Password Reset Sent Screen
+  if (mode === 'resetSent') {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={onClose}></div>
+        <div className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 p-8 text-center">
+          <button onClick={onClose} className="absolute right-5 top-5 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-full">
+            <X className="h-5 w-5" />
+          </button>
+          
+          <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="h-8 w-8 text-emerald-500" />
+          </div>
+          
+          <h2 className="text-2xl font-serif font-bold text-slate-900 dark:text-white mb-4">Check Your Inbox</h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+            We sent you a password change link to <span className="text-emerald-500 font-medium">{formData.email}</span>.
+          </p>
+
+          <Button 
+            onClick={switchToLogin} 
+            className="w-full"
+            size="lg"
+          >
+            Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Forgot Password Form
+  if (mode === 'forgotPassword') {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md transition-opacity duration-300" onClick={onClose}></div>
+        
+        <div className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+          <div className="px-8 pt-8 pb-2 text-center relative">
+            <button onClick={onClose} className="absolute right-5 top-5 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
+              <X className="h-5 w-5" />
+            </button>
+            <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-slate-700">
+               <KeyRound className="h-6 w-6 text-emerald-500" />
+            </div>
+            <h2 className="text-2xl font-serif font-bold text-slate-900 dark:text-white mb-2">Reset Password</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Enter your email and we'll send you a link to reset your password.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="px-8 py-6 space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+                <input
+                  type="email"
+                  required
+                  placeholder="name@example.com"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
+                  value={formData.email}
+                  onChange={e => setFormData({...formData, email: e.target.value})}
+                />
+              </div>
             </div>
 
-            {/* Auth Social Toggle */}
-            {(mode === 'login' || mode === 'signup') && (
-              <div className="space-y-4 mb-8">
-                <button
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-bold py-3.5 px-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] transition-all shadow-sm group"
-                >
-                  <img src="https://storage.googleapis.com/your_ai_workflow_public_bucket/Google__G__logo.svg.png" alt="Google" className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm">Continue with Google</span>
-                </button>
-                <div className="relative flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                  <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
-                  <span>Or email</span>
-                  <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
-                </div>
+            {error && (
+              <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm animate-in fade-in slide-in-from-top-1">
+                <AlertCircle className="h-5 w-5 shrink-0" />
+                <span className="font-medium">{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {mode === 'signup' && (
-                <div className="flex flex-col items-center mb-6">
-                  {/* Fix: Added fileInputRef for triggering click */}
-                  <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                    <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden transition-all group-hover:border-emerald-500 group-hover:bg-emerald-500/5">
-                      {formData.photo ? (
-                        <img src={URL.createObjectURL(formData.photo)} alt="Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <Camera className="h-8 w-8 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                      )}
-                    </div>
-                    {/* Fix: Assigned fileInputRef to input element */}
-                    <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
-                    <div className="absolute -bottom-1 -right-1 bg-emerald-600 p-1.5 rounded-lg text-white shadow-lg border-2 border-white dark:border-slate-900 group-hover:scale-110 transition-transform">
-                      <Upload className="h-3 w-3" />
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-3">Profile Photo</span>
-                </div>
-              )}
+            <Button type="submit" className="w-full group text-lg" isLoading={loading} size="lg">
+              Get Reset Link
+            </Button>
+          </form>
 
-              {mode === 'signup' && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                  <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400 dark:text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
-                    <input
-                      type="text" required placeholder="John Doe"
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-bold"
-                      value={formData.name}
-                      onChange={e => setFormData({...formData, name: e.target.value})}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400 dark:text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
-                  <input
-                    type="email" required placeholder="name@agency.com"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-bold"
-                    value={formData.email}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              {mode !== 'forgotPassword' && mode !== 'resetSent' && (
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center ml-1">
-                    <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Password</label>
-                    {mode === 'login' && (
-                      <button type="button" onClick={() => setMode('forgotPassword')} className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-widest">Forgot?</button>
-                    )}
-                  </div>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400 dark:text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
-                    <input
-                      type="password" required placeholder="••••••••"
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-bold"
-                      value={formData.password}
-                      onChange={e => setFormData({...formData, password: e.target.value})}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {mode === 'signup' && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Confirm Password</label>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400 dark:text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
-                    <input
-                      type="password" required placeholder="••••••••"
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-bold"
-                      value={formData.repeatPassword}
-                      onChange={e => setFormData({...formData, repeatPassword: e.target.value})}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {error && (
-                <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold animate-in fade-in slide-in-from-top-1">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <Button type="submit" className="w-full py-4 text-sm font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20" isLoading={loading} size="lg">
-                {mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Get Reset Link'}
-                {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
-              </Button>
-            </form>
-
-            <div className="mt-8 text-center">
-              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
-                {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-                <button 
-                  onClick={mode === 'login' ? switchToSignup : switchToLogin}
-                  className="text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-widest ml-1 hover:underline"
-                >
-                  {mode === 'login' ? 'Join Now' : 'Sign In'}
-                </button>
-              </p>
-            </div>
-          </div>
-          
-          <div className="mt-auto pt-8 flex justify-center gap-6 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-             <Sparkles className="h-5 w-5 text-emerald-500" />
-             <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Secure Agency Dashboard</div>
+          <div className="px-8 pb-8 pt-2 text-center border-t border-slate-200 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-950/30">
+            <button onClick={switchToLogin} className="text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 text-sm font-medium transition-colors flex items-center justify-center gap-2 mx-auto">
+              <ArrowRight className="h-4 w-4 rotate-180" /> Back to Log In
+            </button>
           </div>
         </div>
       </div>
+    );
+  }
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media (max-height: 600px) {
-          .md\\:h-auto { height: 100vh !important; }
-        }
-      `}} />
+  // Login / Signup Form
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-slate-950/90 backdrop-blur-md transition-opacity duration-300"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal Content */}
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        
+        {/* Header */}
+        <div className="px-8 pt-8 pb-4 text-center relative">
+          <button 
+            onClick={onClose}
+            className="absolute right-5 top-5 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          
+          <h2 className="text-3xl font-serif font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
+            {mode === 'login' ? 'Welcome Back' : 'Join Us'}
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
+            {mode === 'login' 
+              ? 'Sign in to access your bookings and favorites' 
+              : 'Create an account to start your Malnad journey'}
+          </p>
+        </div>
+
+        {/* Google Auth Button */}
+        <div className="px-8 pb-2">
+           <button
+             onClick={handleGoogleLogin}
+             disabled={loading}
+             className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-900 font-bold py-3 px-4 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all duration-200 shadow-sm"
+           >
+             <img 
+               src="https://storage.googleapis.com/your_ai_workflow_public_bucket/Google__G__logo.svg.png" 
+               alt="Google" 
+               className="h-5 w-5" 
+             />
+             <span>{mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}</span>
+           </button>
+           
+           <div className="relative my-6 flex items-center">
+             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+             <span className="flex-shrink-0 mx-4 text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Or {mode === 'login' ? 'Log in' : 'Sign up'} with Email</span>
+             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+           </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="px-8 pb-6 space-y-5">
+          {mode === 'signup' && (
+            <>
+              {/* Profile Photo Upload */}
+              <div className="flex justify-center mb-4">
+                <div className="relative group cursor-pointer">
+                  <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center overflow-hidden transition-colors hover:border-emerald-500">
+                    {formData.photo ? (
+                      <img 
+                        src={URL.createObjectURL(formData.photo)} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Camera className="h-8 w-8 text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 transition-colors" />
+                    )}
+                  </div>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                  <div className="absolute bottom-0 right-0 bg-emerald-500 p-1 rounded-full text-white shadow-lg">
+                    <Upload className="h-3 w-3" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
+                <div className="relative group">
+                  <User className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. John Doe"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
+            <div className="relative group">
+              <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+              <input
+                type="email"
+                required
+                placeholder="name@example.com"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center ml-1">
+               <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Password</label>
+               {mode === 'login' && (
+                 <button 
+                    type="button" 
+                    onClick={() => setMode('forgotPassword')}
+                    className="text-xs text-emerald-500 hover:text-emerald-400 font-medium"
+                 >
+                    Forgot Password?
+                 </button>
+               )}
+            </div>
+            <div className="relative group">
+              <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
+                value={formData.password}
+                onChange={e => setFormData({...formData, password: e.target.value})}
+              />
+            </div>
+          </div>
+
+          {mode === 'signup' && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Repeat Password</label>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
+                  value={formData.repeatPassword}
+                  onChange={e => setFormData({...formData, repeatPassword: e.target.value})}
+                />
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm animate-in fade-in slide-in-from-top-1">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <span className="font-medium">{error}</span>
+            </div>
+          )}
+
+          <div className="pt-2">
+            <Button 
+              type="submit" 
+              className="w-full group text-lg" 
+              isLoading={loading}
+              size="lg"
+            >
+              {mode === 'login' ? 'Sign In' : 'Create Account'}
+              {!loading && <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />}
+            </Button>
+          </div>
+        </form>
+
+        {/* Footer */}
+        <div className="px-8 pb-8 pt-2 text-center border-t border-slate-200 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-950/30">
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
+            {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
+            <button 
+              onClick={mode === 'login' ? switchToSignup : switchToLogin}
+              className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 font-bold transition-colors ml-1"
+            >
+              {mode === 'login' ? 'Sign Up' : 'Log In'}
+            </button>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
