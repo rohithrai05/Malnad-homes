@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Mail, Lock, User, ArrowRight, AlertCircle, Camera, Upload, CheckCircle, KeyRound } from 'lucide-react';
+import { X, Mail, Lock, User, ArrowRight, AlertCircle, Camera, Upload, CheckCircle, KeyRound, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './Button';
 
@@ -13,7 +13,7 @@ type AuthMode = 'login' | 'signup' | 'verify' | 'forgotPassword' | 'resetSent';
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [mode, setMode] = useState<AuthMode>('login');
-  const { login, loginWithGoogle, signup, resetPassword } = useAuth();
+  const { login, signup, resetPassword } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ 
     name: '', 
@@ -23,6 +23,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     photo: null as File | null
   });
   const [error, setError] = useState('');
+  const [isAdminMode, setIsAdminMode] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -30,6 +31,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setMode('login');
       setError('');
       setFormData({ name: '', email: '', password: '', repeatPassword: '', photo: null });
+      setIsAdminMode(false);
     }
   }, [isOpen]);
 
@@ -62,23 +64,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     } catch (err: any) {
       if (err.message === "Email not verified") {
         setMode('verify');
+      } else if (err.message?.includes("Database error saving new user")) {
+        setError("System configuration error: Please run the SQL setup script in Supabase to fix database triggers.");
       } else {
         setError(err.message || 'Authentication failed. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      await loginWithGoogle();
-      onClose();
-    } catch (err: any) {
-      if (err.message !== "Sign in cancelled") {
-         setError(err.message || 'Google sign in failed');
       }
     } finally {
       setLoading(false);
@@ -100,6 +89,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setMode('signup');
     setError('');
     setFormData({ name: '', email: '', password: '', repeatPassword: '', photo: null });
+  };
+
+  const toggleAdminMode = () => {
+    setIsAdminMode(!isAdminMode);
+    setMode('login'); // Always force login view
+    setError('');
   };
 
   // Verification Screen
@@ -231,7 +226,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+      <div className={`relative w-full max-w-md bg-white dark:bg-slate-900 border ${isAdminMode ? 'border-red-500/30 shadow-[0_0_50px_rgba(239,68,68,0.1)]' : 'border-slate-200 dark:border-slate-800 shadow-2xl'} rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300`}>
         
         {/* Header */}
         <div className="px-8 pt-8 pb-4 text-center relative">
@@ -242,40 +237,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <X className="h-5 w-5" />
           </button>
           
+          {isAdminMode ? (
+             <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-500/10 text-red-500 rounded-full text-xs font-bold uppercase tracking-widest mb-2 border border-red-500/20">
+                <Shield className="h-3 w-3" /> Admin Portal
+             </div>
+          ) : null}
+
           <h2 className="text-3xl font-serif font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
-            {mode === 'login' ? 'Welcome Back' : 'Join Us'}
+            {mode === 'login' ? (isAdminMode ? 'Admin Login' : 'Welcome Back') : 'Join Us'}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
             {mode === 'login' 
-              ? 'Sign in to access your bookings and favorites' 
+              ? (isAdminMode ? 'Secure access for administrators only.' : 'Sign in to access your bookings and favorites') 
               : 'Create an account to start your Malnad journey'}
           </p>
         </div>
 
-        {/* Google Auth Button */}
-        <div className="px-8 pb-2">
-           <button
-             onClick={handleGoogleLogin}
-             disabled={loading}
-             className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-900 font-bold py-3 px-4 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all duration-200 shadow-sm"
-           >
-             <img 
-               src="https://storage.googleapis.com/your_ai_workflow_public_bucket/Google__G__logo.svg.png" 
-               alt="Google" 
-               className="h-5 w-5" 
-             />
-             <span>{mode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}</span>
-           </button>
-           
-           <div className="relative my-6 flex items-center">
-             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-             <span className="flex-shrink-0 mx-4 text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Or {mode === 'login' ? 'Log in' : 'Sign up'} with Email</span>
-             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-           </div>
-        </div>
-
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-8 pb-6 space-y-5">
+        <form onSubmit={handleSubmit} className="px-8 pb-6 space-y-5 pt-4">
           {mode === 'signup' && (
             <>
               {/* Profile Photo Upload */}
@@ -324,12 +303,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
             <div className="relative group">
-              <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+              <Mail className={`absolute left-4 top-3.5 h-5 w-5 transition-colors ${isAdminMode ? 'text-red-400' : 'text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500'}`} />
               <input
                 type="email"
                 required
-                placeholder="name@example.com"
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
+                placeholder={isAdminMode ? "admin@malnadhomes.in" : "name@example.com"}
+                className={`w-full bg-slate-50 dark:bg-slate-950 border rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 outline-none transition-all ${isAdminMode ? 'border-red-500/30 focus:ring-2 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500'}`}
                 value={formData.email}
                 onChange={e => setFormData({...formData, email: e.target.value})}
               />
@@ -339,7 +318,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <div className="space-y-1.5">
             <div className="flex justify-between items-center ml-1">
                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Password</label>
-               {mode === 'login' && (
+               {mode === 'login' && !isAdminMode && (
                  <button 
                     type="button" 
                     onClick={() => setMode('forgotPassword')}
@@ -350,12 +329,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                )}
             </div>
             <div className="relative group">
-              <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+              <Lock className={`absolute left-4 top-3.5 h-5 w-5 transition-colors ${isAdminMode ? 'text-red-400' : 'text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500'}`} />
               <input
                 type="password"
                 required
                 placeholder="••••••••"
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
+                className={`w-full bg-slate-50 dark:bg-slate-950 border rounded-xl py-3 pl-12 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 outline-none transition-all ${isAdminMode ? 'border-red-500/30 focus:ring-2 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500'}`}
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}
               />
@@ -380,28 +359,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           )}
 
           {error && (
-            <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm animate-in fade-in slide-in-from-top-1 text-left">
               <AlertCircle className="h-5 w-5 shrink-0" />
-              <span className="font-medium">{error}</span>
+              <span className="font-medium leading-tight">{error}</span>
             </div>
           )}
 
           <div className="pt-2">
-            <Button 
-              type="submit" 
-              className="w-full group text-lg" 
-              isLoading={loading}
-              size="lg"
-            >
-              {mode === 'login' ? 'Sign In' : 'Create Account'}
-              {!loading && <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />}
-            </Button>
+            {isAdminMode ? (
+               <Button 
+                 type="submit" 
+                 className="w-full group text-lg bg-red-600 hover:bg-red-500 border-red-600 hover:border-red-500 shadow-red-900/20" 
+                 isLoading={loading}
+                 size="lg"
+               >
+                 Admin Access
+                 {!loading && <Shield className="ml-2 h-5 w-5" />}
+               </Button>
+            ) : (
+               <Button 
+                 type="submit" 
+                 className="w-full group text-lg" 
+                 isLoading={loading}
+                 size="lg"
+               >
+                 {mode === 'login' ? 'Sign In' : 'Create Account'}
+                 {!loading && <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />}
+               </Button>
+            )}
           </div>
         </form>
 
         {/* Footer */}
-        <div className="px-8 pb-8 pt-2 text-center border-t border-slate-200 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-950/30">
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
+        <div className="px-8 pb-4 pt-2 text-center border-t border-slate-200 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-950/30">
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
             {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
             <button 
               onClick={mode === 'login' ? switchToSignup : switchToLogin}
@@ -410,6 +401,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               {mode === 'login' ? 'Sign Up' : 'Log In'}
             </button>
           </p>
+          
+          <button 
+            onClick={toggleAdminMode}
+            className={`text-[10px] font-black uppercase tracking-widest transition-colors ${isAdminMode ? 'text-red-500 hover:text-red-400' : 'text-slate-300 hover:text-slate-500'}`}
+          >
+            {isAdminMode ? 'Back to User Login' : 'Admin Access'}
+          </button>
         </div>
       </div>
     </div>

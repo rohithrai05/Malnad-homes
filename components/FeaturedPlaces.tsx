@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Star, ArrowRight, Heart, ChevronRight } from 'lucide-react';
-import { Property } from '../types';
-import { properties as staticProperties } from '../data/properties';
+import { Property, PropertyCategory } from '../types';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
 import { PropertyCardSkeleton } from './Skeleton';
+import { supabase } from '../lib/supabase';
 
 interface PropertyCardProps {
   property: Property;
@@ -50,7 +50,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
         {/* Glassmorphic Badge */}
         <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-white/10 shadow-xl">
           <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-          <span className="text-xs font-bold text-white">{property.rating}</span>
+          <span className="text-xs font-bold text-white">{property.rating || 'New'}</span>
         </div>
         
         {/* Prominent Favorite Button */}
@@ -104,16 +104,45 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
 
 export const FeaturedPlaces: React.FC<FeaturedPlacesProps> = ({ onViewAllClick, onViewProperty }) => {
   const [isLoading, setIsLoading] = useState(true);
-
-  const allValidProperties = useMemo(() => {
-    const dynamicProps = JSON.parse(localStorage.getItem('malnad_dynamic_properties') || '[]') as Property[];
-    const approvedDynamic = dynamicProps.filter(p => p.status === 'approved');
-    return [...staticProperties, ...approvedDynamic].filter(p => p.mainImage && p.mainImage.trim() !== '');
-  }, []);
+  const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1200);
-    return () => clearTimeout(timer);
+    const fetchProps = async () => {
+      // Fetch only approved dynamic properties from Supabase
+      const { data } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('status', 'approved')
+        .limit(6);
+
+      let dynamicProps: Property[] = [];
+      if (data) {
+        dynamicProps = data.map((p: any) => ({
+             id: p.id,
+             title: p.title,
+             category: p.category as PropertyCategory,
+             location: p.location,
+             price: p.price,
+             priceValue: p.price_value,
+             rating: 0,
+             mainImage: p.main_image,
+             galleryImages: p.gallery_images || [],
+             description: p.description,
+             amenities: p.amenities || [],
+             allowedGuest: p.allowed_guest || 'Any',
+             specs: p.specs,
+             coordinates: p.coordinates,
+             status: p.status,
+             owner_id: p.owner_id
+        }));
+      }
+      
+      const filtered = dynamicProps.filter(p => p.mainImage && p.mainImage.trim() !== '');
+      setFeaturedProperties(filtered);
+      setIsLoading(false);
+    };
+
+    fetchProps();
   }, []);
 
   return (
@@ -140,8 +169,15 @@ export const FeaturedPlaces: React.FC<FeaturedPlacesProps> = ({ onViewAllClick, 
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {isLoading ? Array.from({ length: 3 }).map((_, i) => <PropertyCardSkeleton key={i} />) : 
-            allValidProperties.slice(0, 6).map((place) => <PropertyCard key={place.id} property={place} onClick={() => onViewProperty(place)} />)}
+          {isLoading ? (
+             Array.from({ length: 3 }).map((_, i) => <PropertyCardSkeleton key={i} />)
+          ) : featuredProperties.length > 0 ? (
+             featuredProperties.map((place) => <PropertyCard key={place.id} property={place} onClick={() => onViewProperty(place)} />)
+          ) : (
+             <div className="col-span-full text-center text-slate-500 py-10">
+                No featured properties available at the moment.
+             </div>
+          )}
         </div>
         
         {/* Mobile View All CTA */}

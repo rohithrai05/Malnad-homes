@@ -1,7 +1,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Guideline: Always use a new instance with the direct process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT' reference
+// Guideline: Always use a new instance with the direct process.env.API_KEY reference
 // and create right before making an API call where possible.
 
 export const generateListingDescription = async (
@@ -11,7 +11,14 @@ export const generateListingDescription = async (
 ): Promise<string> => {
   // Always use the latest API key from environment variable directly in the constructor
   // DO NOT define or check for existence of API_KEY manually as per guidelines.
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT' });
+  // UPDATE: Safe check added for Vercel deployment debugging.
+  const apiKey = process?.env?.API_KEY;
+  if (!apiKey) {
+    console.error("Gemini API Key is missing. Please check Vercel Environment Variables.");
+    return "Error: API Key missing in environment variables.";
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   try {
     const prompt = `

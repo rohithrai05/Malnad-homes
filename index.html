@@ -5,49 +5,163 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Malnad Homes | Premium Stays & Listing Management</title>
+    
+    <!-- FIX: Define Tailwind Config BEFORE loading Tailwind CSS to ensure darkMode: 'class' works reliably -->
+    <script>
+      window.tailwind = {
+        config: {
+          darkMode: 'class',
+          theme: {
+            extend: {
+              fontFamily: {
+                sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                serif: ['"Playfair Display"', 'serif'],
+              },
+              colors: {
+                malnad: {
+                  950: '#022c22', // Deep forest green
+                  900: '#064e3b',
+                  800: '#065f46',
+                  500: '#10b981',
+                  400: '#34d399',
+                  accent: '#fbbf24', // Warm gold
+                }
+              }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Environment Config for Vercel/Browser Runtime -->
+    <script>
+      window.process = {
+        env: {
+          API_KEY: "AIzaSyDpJcErvajlU4wWkI6sIOwCmCsTUQMa-LI"
+        }
+      };
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
     <style>
       body {
-        background-color: #0f172a;
-        /* Default text color handled by classes */
-      }
-      .light body {
+        /* Default base background (Light) */
         background-color: #f8fafc;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      /* Dark mode override matching Tailwind slate-950 */
+      html.dark body {
+        background-color: #0f172a;
       }
       /* Custom scrollbar for dark theme */
       ::-webkit-scrollbar {
         width: 10px;
       }
       ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      html.dark ::-webkit-scrollbar-track {
         background: #0f172a;
       }
       ::-webkit-scrollbar-thumb {
-        background: #1e293b;
+        background: #94a3b8; /* Slate 400 */
         border-radius: 5px;
       }
+      html.dark ::-webkit-scrollbar-thumb {
+        background: #1e293b; /* Slate 800 */
+      }
       ::-webkit-scrollbar-thumb:hover {
-        background: #334155;
+        background: #64748b; /* Slate 500 */
+      }
+      html.dark ::-webkit-scrollbar-thumb:hover {
+        background: #334155; /* Slate 700 */
       }
       /* Map specific overrides */
       .leaflet-container {
-        background: #0f172a;
+        background: #f8fafc;
         font-family: 'Plus Jakarta Sans', sans-serif;
       }
+      html.dark .leaflet-container {
+        background: #0f172a;
+      }
       .leaflet-popup-content-wrapper {
-        background: rgba(15, 23, 42, 0.95);
+        background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
-        color: white;
-        border: 1px solid #334155;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
       }
+      html.dark .leaflet-popup-content-wrapper {
+        background: rgba(15, 23, 42, 0.95);
+        color: white;
+        border: 1px solid #334155;
+      }
       .leaflet-popup-tip {
+        background: rgba(255, 255, 255, 0.95);
+      }
+      html.dark .leaflet-popup-tip {
         background: rgba(15, 23, 42, 0.95);
       }
+
+      /* Mobile Menu Animation - Slide from Left (Legacy/Unused but kept for ref if needed) */
+      @keyframes mobileMenuSlideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-100%);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      .mobile-menu-slide-in {
+        animation: mobileMenuSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      /* Mobile Menu Animation - Slide from Right */
+      @keyframes mobileMenuSlideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(100%);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      .mobile-menu-slide-in-right {
+        animation: mobileMenuSlideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      
+      /* Fade in for backdrop */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.2s ease-out forwards;
+      }
     </style>
-  </head>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "leaflet": "https://esm.sh/leaflet@1.9.4",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.7",
+    "firebase/": "https://esm.sh/firebase@^12.7.0/"
+  }
+}
+</script>
+</head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

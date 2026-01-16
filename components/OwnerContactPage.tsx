@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ArrowLeft, User, Mail, Phone, Calendar, Users, MessageSquare, CheckCircle, MapPin, ShieldCheck, BadgeCheck } from 'lucide-react';
 import { Property } from '../types';
 import { Button } from './Button';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 interface OwnerContactPageProps {
   property: Property;
@@ -17,18 +18,73 @@ export const OwnerContactPage: React.FC<OwnerContactPageProps> = ({ property, on
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Pre-fill if user is logged in
+  // Form State
   const [tenantName, setTenantName] = useState(user?.name || '');
   const [tenantEmail, setTenantEmail] = useState(user?.email || '');
   const [tenantPhone, setTenantPhone] = useState(user?.contact || '');
+  const [moveIn, setMoveIn] = useState('');
+  const [guests, setGuests] = useState('1 Guest');
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Logic: Get today's date in YYYY-MM-DD format for min attribute
+  const today = useMemo(() => {
+    return new Date().toISOString().split('T')[0];
+  }, []);
+
+  // Logic: Generate guest options based on property specs
+  const guestOptions = useMemo(() => {
+    const max = property.specs?.guests || 5; // Default to 5 if undefined
+    return Array.from({ length: max }, (_, i) => i + 1);
+  }, [property.specs]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+
+    if (tenantPhone.length < 10) {
+      alert("Phone number must be 10 digits.");
+      return;
+    }
+
+    // Strong validation for date
+    const selectedDate = new Date(moveIn);
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0); // Normalize today to start of day
+
+    if (selectedDate < todayDate) {
+      alert("Move-in date cannot be in the past. Please select a valid date.");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    
+    try {
+      const { error } = await supabase.from('inquiries').insert([
+        {
+          user_id: user.id,
+          owner_id: property.owner_id, // Critical: Send to the property owner
+          property_id: property.id,
+          property_title: property.title,
+          owner_contact: property.owner?.email || '',
+          name: tenantName,
+          email: tenantEmail,
+          phone: tenantPhone,
+          move_in_date: moveIn || null,
+          guests: guests,
+          message: message,
+          status: 'pending'
+        }
+      ]);
+
+      if (error) throw error;
+
       setSuccess(true);
-    }, 1500);
+    } catch (err) {
+      console.error('Error submitting inquiry:', err);
+      alert('Failed to send inquiry. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const owner = property.owner || {
@@ -179,8 +235,12 @@ export const OwnerContactPage: React.FC<OwnerContactPageProps> = ({ property, on
                         <Phone className="absolute left-4 top-3 h-4 w-4 md:h-5 md:w-5 md:top-3.5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                         <input 
                           type="tel" required 
-                          value={tenantPhone} onChange={(e) => setTenantPhone(e.target.value)}
-                          placeholder="+91 XXXXX XXXXX"
+                          value={tenantPhone} 
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            if (val.length <= 10) setTenantPhone(val);
+                          }}
+                          placeholder="10 digit number"
                           className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 md:py-3 pl-10 md:pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-sm md:text-base" 
                         />
                       </div>
@@ -192,17 +252,30 @@ export const OwnerContactPage: React.FC<OwnerContactPageProps> = ({ property, on
                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('contact.moveIn')}</label>
                       <div className="relative group">
                         <Calendar className="absolute left-4 top-3 h-4 w-4 md:h-5 md:w-5 md:top-3.5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-                        <input type="date" required className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 md:py-3 pl-10 md:pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all [color-scheme:dark] text-sm md:text-base" />
+                        <input 
+                          type="date" 
+                          required 
+                          min={today}
+                          value={moveIn}
+                          onChange={(e) => setMoveIn(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 md:py-3 pl-10 md:pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all [color-scheme:dark] text-sm md:text-base" 
+                        />
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('contact.guests')}</label>
                       <div className="relative group">
                         <Users className="absolute left-4 top-3 h-4 w-4 md:h-5 md:w-5 md:top-3.5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-                        <select className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 md:py-3 pl-10 md:pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all appearance-none cursor-pointer text-sm md:text-base">
-                          <option>1 Tenant</option>
-                          <option>2 Tenants</option>
-                          <option>3+ Tenants</option>
+                        <select 
+                          value={guests}
+                          onChange={(e) => setGuests(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 md:py-3 pl-10 md:pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all appearance-none cursor-pointer text-sm md:text-base"
+                        >
+                          {guestOptions.map(num => (
+                            <option key={num} value={`${num} ${num === 1 ? 'Guest' : 'Guests'}`}>
+                              {num} {num === 1 ? 'Guest' : 'Guests'}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>
@@ -214,6 +287,8 @@ export const OwnerContactPage: React.FC<OwnerContactPageProps> = ({ property, on
                       <MessageSquare className="absolute left-4 top-4 h-4 w-4 md:h-5 md:w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                       <textarea 
                         rows={4} 
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
                         placeholder="Describe your background or ask specific questions..."
                         className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-4 pl-10 md:pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all resize-none text-sm md:text-base" 
                       />

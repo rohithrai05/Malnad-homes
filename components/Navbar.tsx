@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, User, LogOut, Search, Bell, Settings, ChevronDown, ChevronRight, Map, Crosshair, Loader2, ShieldCheck, Home } from 'lucide-react';
+import { Menu, X, User, LogOut, Search, Bell, Settings, ChevronDown, ChevronRight, Map, Crosshair, Loader2, ShieldCheck, Home, LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { supabase } from '../lib/supabase';
 
 interface NavbarProps {
-  onHome?: () => void;
+  onHome?: (sectionId?: string) => void;
   onOpenMap?: () => void;
   onOpenDashboard?: () => void;
   onOpenAdminDashboard?: () => void;
@@ -13,6 +14,7 @@ interface NavbarProps {
   onOpenProfile?: () => void;
   onOpenSettings?: () => void;
   onOpenAuthModal?: () => void;
+  alwaysSolid?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
@@ -23,7 +25,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSearch,
   onOpenProfile,
   onOpenSettings,
-  onOpenAuthModal
+  onOpenAuthModal,
+  alwaysSolid = false
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,6 +38,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+  
+  // Notification State
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [hasUnread, setHasUnread] = useState(false);
 
   const { user, isAuthenticated, logout } = useAuth();
   const { t } = useLanguage();
@@ -60,9 +67,67 @@ export const Navbar: React.FC<NavbarProps> = ({
       }
     };
     
+    // Initial check
+    handleScroll();
+    
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Scroll Lock when Mobile Menu is Open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
+
+  // Combined state for visual style
+  const isSolid = isScrolled || alwaysSolid;
+
+  // Fetch Notifications Logic
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchNotifications = async () => {
+        try {
+          // Fetch latest approved properties to show as notifications
+          const { data, error } = await supabase
+            .from('properties')
+            .select('title, location, created_at')
+            .eq('status', 'approved')
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+          if (data && data.length > 0) {
+            const newNotifs = data.map((prop: any, index: number) => ({
+              id: index,
+              text: `New listing in ${prop.location}: ${prop.title}`,
+              time: "Recently added",
+              unread: index < 2 // First 2 are unread for demo logic
+            }));
+            setNotifications(newNotifs);
+            setHasUnread(true);
+          } else {
+            // Default welcome notification if no properties found
+            setNotifications([
+              { id: 1, text: "Welcome to Malnad Homes!", time: "Just now", unread: true }
+            ]);
+            setHasUnread(true);
+          }
+        } catch (err) {
+          console.error("Error fetching notifications:", err);
+        }
+      };
+      
+      fetchNotifications();
+    } else {
+      setNotifications([]);
+    }
+  }, [isAuthenticated]);
 
   // Click outside to close dropdowns
   useEffect(() => {
@@ -134,25 +199,38 @@ export const Navbar: React.FC<NavbarProps> = ({
     );
   };
 
-  const notifications = [
-    { id: 1, text: "New listing approved in Bolwar.", time: "2h ago", unread: true },
-    { id: 2, text: "Welcome to Malnad Homes!", time: "1d ago", unread: false },
-  ];
+  const handleMarkAllRead = () => {
+    const updated = notifications.map(n => ({ ...n, unread: false }));
+    setNotifications(updated);
+    setHasUnread(false);
+  };
 
   const handleHomeClick = () => {
     if (onHome) {
-      onHome();
+      onHome(); // Defaults to no section (top)
       setIsMenuOpen(false);
       setIsSearchOpen(false);
     }
   };
 
+  const handleSectionClick = (sectionId: string) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      setActiveSection(sectionId);
+    } else {
+      // If element not found, we are on another page. Navigate to Home with section target.
+      if (onHome) onHome(sectionId);
+    }
+    setIsMenuOpen(false);
+  };
+
   return (
     <>
       <nav 
-        className={`fixed w-full z-50 transition-all duration-500 border-b ${
-          isScrolled 
-            ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-slate-200 dark:border-slate-800 py-2 shadow-xl' 
+        className={`fixed w-full z-50 transition-all duration-300 border-b ${
+          isSolid 
+            ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200/50 dark:border-slate-800/50 py-2 shadow-lg' 
             : 'bg-transparent border-transparent py-4'
         }`}
       >
@@ -164,23 +242,51 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center space-x-2 md:space-x-3 cursor-pointer group shrink-0" 
               onClick={handleHomeClick}
             >
-              <div className="relative h-9 w-9 md:h-11 md:w-11 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl p-1.5 md:p-2 shadow-lg shadow-emerald-500/20 transition-all duration-300 group-hover:shadow-emerald-500/40 group-hover:scale-105 flex items-center justify-center">
-                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white">
-                    <path d="M3 10L12 2L21 10V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V10Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-70"/>
+              {/* Logo: The Heritage Pearl (Animated Interactive Version) */}
+              <div className={`relative h-10 w-10 md:h-12 md:w-12 transition-all duration-500 ease-out group-hover:scale-110 ${isSolid ? 'text-emerald-600 dark:text-emerald-500' : 'text-emerald-400 drop-shadow-md'}`}>
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full overflow-visible">
+                    
+                    {/* The Pearl/Sun - Rises behind the roof on hover */}
+                    <circle 
+                      cx="12" cy="14" r="6" 
+                      className="text-amber-400/90 fill-amber-400/30 transition-all duration-700 ease-in-out group-hover:-translate-y-3 group-hover:fill-amber-400/80 group-hover:shadow-[0_0_30px_rgba(251,191,36,0.8)]" 
+                      strokeWidth="0" 
+                      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+                    />
+                    
+                    {/* The Heritage House Structure */}
+                    <g className="transition-transform duration-500 ease-out group-hover:-translate-y-0.5">
+                      {/* Top Tier Roof */}
+                      <path d="M12 2L3 8h18L12 2z" strokeWidth="2" fill="currentColor" className="opacity-10 transition-opacity duration-300 group-hover:opacity-25" />
+                      <path d="M12 2L3 8h18L12 2" strokeWidth="2" />
+                      
+                      {/* Decorative Finial - Bobs slightly */}
+                      <path d="M12 0.5V2" strokeWidth="2" className="transition-transform duration-300 group-hover:-translate-y-0.5" />
+
+                      {/* Bottom Tier & Pillars */}
+                      <path d="M2 9l-1 4h22l-1-4" strokeWidth="2" />
+                      <path d="M5 13v8h14v-8" strokeWidth="2" />
+                      
+                      {/* Central Doorway - Lights up on hover */}
+                      <rect x="10" y="16" width="4" height="5" className="fill-amber-200/0 transition-all duration-500 group-hover:fill-amber-200/90" strokeWidth="0" />
+                      <path d="M10 21v-5h4v5" strokeWidth="1.5" />
+                      
+                      {/* Wisp of smoke (Home vibe) */}
+                      <circle cx="17" cy="5" r="0.5" className="fill-slate-400/0 transition-all duration-700 delay-100 group-hover:fill-slate-400/50 group-hover:-translate-y-2 group-hover:scale-[2]" strokeWidth="0" />
+                    </g>
                  </svg>
               </div>
-              <div className="flex flex-col -space-y-1">
-                <span className={`font-serif text-lg md:text-2xl font-bold tracking-tight ${isScrolled ? 'text-slate-900 dark:text-white' : 'text-white'}`}>
-                  Malnad<span className="text-emerald-500">Homes</span>
+              <div className="flex flex-col -space-y-0.5">
+                <span className={`font-serif text-lg md:text-xl font-bold tracking-tight leading-none ${isSolid ? 'text-slate-900 dark:text-white' : 'text-white drop-shadow-md'}`}>
+                  Malnad<span className={isSolid ? "text-emerald-500" : "text-emerald-400"}>Homes</span>
                 </span>
-                <span className={`text-[8px] md:text-[10px] uppercase font-black tracking-[0.2em] hidden sm:block ${isScrolled ? 'text-slate-500' : 'text-slate-300'}`}>
-                  Verified Stays
+                <span className={`text-[9px] uppercase font-bold tracking-[0.25em] hidden sm:block ${isSolid ? 'text-slate-500' : 'text-slate-200 drop-shadow-sm'}`}>
+                  Puttur
                 </span>
               </div>
             </div>
 
-            {/* Desktop Center Navigation */}
+            {/* Desktop Center Navigation - Visible on Large screens only */}
             {!isSearchOpen && (
               <div className="hidden lg:flex items-center bg-slate-100/10 dark:bg-white/5 backdrop-blur-md px-1.5 py-1.5 rounded-full border border-white/10 shadow-inner">
                 {navLinks.map((link) => (
@@ -189,17 +295,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                     href={link.href}
                     onClick={(e) => {
                       e.preventDefault();
-                      if (link.id === 'home') handleHomeClick();
-                      else {
-                        const el = document.getElementById(link.id);
-                        if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        setActiveSection(link.id);
-                      }
+                      handleSectionClick(link.id);
                     }}
                     className={`px-5 py-2 rounded-full text-[13px] font-bold transition-all duration-300 ${
                       activeSection === link.id
                         ? 'text-white bg-emerald-600 shadow-lg shadow-emerald-900/30'
-                        : isScrolled 
+                        : isSolid 
                           ? 'text-slate-600 dark:text-slate-300 hover:text-emerald-500' 
                           : 'text-slate-100 hover:text-white hover:bg-white/10'
                     }`}
@@ -211,7 +312,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={onOpenMap}
                   className={`px-5 py-2 rounded-full text-[13px] font-bold transition-all duration-300 flex items-center gap-2 ${
-                      isScrolled 
+                      isSolid 
                         ? 'text-slate-600 dark:text-slate-300 hover:text-emerald-500' 
                         : 'text-slate-100 hover:text-white hover:bg-white/10'
                   }`}
@@ -229,7 +330,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ref={searchRef}
                   type="text"
                   placeholder={t('nav.searchPlaceholder')}
-                  className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-emerald-500/20 rounded-2xl py-3 pl-12 pr-40 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-2xl transition-all placeholder:text-slate-400 font-bold text-sm"
+                  className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-emerald-500/20 rounded-2xl py-3 pl-12 pr-4 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-2xl transition-all placeholder:text-slate-400 font-bold text-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
@@ -256,47 +357,53 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button 
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className={`hidden lg:flex p-2.5 rounded-xl transition-all ${
-                  isSearchOpen ? 'bg-slate-100 dark:bg-slate-800 text-emerald-500' : isScrolled ? 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' : 'text-white hover:bg-white/10'
+                  isSearchOpen ? 'bg-slate-100 dark:bg-slate-800 text-emerald-500' : isSolid ? 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' : 'text-white hover:bg-white/10'
                 }`}
               >
                 <Search className="h-5 w-5" />
               </button>
 
-              {/* Notifications */}
-              <div className="relative" ref={notifRef}>
-                <button 
-                  onClick={() => setIsNotifOpen(!isNotifOpen)}
-                  className={`p-2.5 rounded-xl transition-all relative ${
-                    isScrolled ? 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' : 'text-white hover:bg-white/10'
-                  }`}
-                >
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-                </button>
-                {isNotifOpen && (
-                  <div className="absolute right-0 top-full mt-3 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/30">
-                      <span className="font-bold text-slate-900 dark:text-white text-sm">Updates</span>
-                      <button className="text-[10px] font-black text-emerald-500 uppercase tracking-widest hover:underline">Mark Read</button>
+              {/* Notifications - Only show when authenticated */}
+              {isAuthenticated && (
+                <div className="relative" ref={notifRef}>
+                  <button 
+                    onClick={() => setIsNotifOpen(!isNotifOpen)}
+                    className={`p-2.5 rounded-xl transition-all relative ${
+                      isSolid ? 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' : 'text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Bell className="h-5 w-5" />
+                    {hasUnread && (
+                      <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+                    )}
+                  </button>
+                  {isNotifOpen && (
+                    <div className="absolute right-0 top-full mt-3 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/30">
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">New Listings & Updates</span>
+                        <button onClick={handleMarkAllRead} className="text-[10px] font-black text-emerald-500 uppercase tracking-widest hover:underline">Mark Read</button>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                        {notifications.length > 0 ? notifications.map(notif => (
+                          <div key={notif.id} className="p-4 border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer flex gap-3">
+                             <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${notif.unread ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+                             <div className="min-w-0">
+                               <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-snug">{notif.text}</p>
+                               <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold">{notif.time}</p>
+                             </div>
+                          </div>
+                        )) : (
+                          <div className="p-6 text-center text-slate-500 text-sm">No new notifications</div>
+                        )}
+                      </div>
                     </div>
-                    <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                      {notifications.map(notif => (
-                        <div key={notif.id} className="p-4 border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer flex gap-3">
-                           <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${notif.unread ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
-                           <div className="min-w-0">
-                             <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-snug">{notif.text}</p>
-                             <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold">{notif.time}</p>
-                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* User Menu / Profile */}
               <div className="hidden md:flex items-center">
-                <div className={`h-8 w-px mx-3 ${isScrolled ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white/20'}`}></div>
+                <div className={`h-8 w-px mx-3 ${isSolid ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white/20'}`}></div>
                 {isAuthenticated && user ? (
                   <div className="relative" ref={userMenuRef}>
                     <button 
@@ -306,7 +413,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <div className="h-8 w-8 rounded-full border-2 border-white/20 overflow-hidden shadow-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-xs uppercase">
                         {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name.charAt(0)}
                       </div>
-                      <span className={`text-sm font-bold truncate max-w-[100px] ${isScrolled ? 'text-slate-900 dark:text-slate-200' : 'text-white'}`}>
+                      <span className={`text-sm font-bold truncate max-w-[100px] ${isSolid ? 'text-slate-900 dark:text-slate-200' : 'text-white'}`}>
                         {user.name.split(' ')[0]}
                       </span>
                       <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-300 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
@@ -315,7 +422,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <div className="absolute right-0 top-full mt-3 w-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95">
                         <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30">
                            <div className="flex items-center gap-3 mb-2">
-                             <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-black text-sm uppercase">{user.name.charAt(0)}</div>
+                             <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-black text-sm uppercase overflow-hidden">
+                                {user.avatar ? (
+                                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  user.name.charAt(0)
+                                )}
+                             </div>
                              <div className="min-w-0">
                                <p className="text-slate-900 dark:text-white font-bold text-sm truncate">{user.name}</p>
                                <p className="text-slate-500 text-[10px] uppercase font-black tracking-widest">{user.role}</p>
@@ -349,23 +462,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <button onClick={() => onOpenAuthModal?.()} className={`text-sm font-bold transition-colors ${isScrolled ? 'text-slate-600 dark:text-slate-400 hover:text-slate-900' : 'text-slate-200 hover:text-white'}`}>{t('nav.login')}</button>
+                    <button onClick={() => onOpenAuthModal?.()} className={`text-sm font-bold transition-colors ${isSolid ? 'text-slate-600 dark:text-slate-400 hover:text-slate-900' : 'text-slate-200 hover:text-white'}`}>{t('nav.login')}</button>
                     <button onClick={() => onOpenAuthModal?.()} className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/20 active:scale-95">{t('nav.signup')}</button>
                   </div>
                 )}
               </div>
 
-              {/* Mobile Menu Toggles */}
-              <div className="md:hidden flex items-center gap-1">
+              {/* Mobile/Tablet Menu Toggles (Visible up to Large screens) */}
+              <div className="lg:hidden flex items-center gap-1">
                 <button 
                   onClick={() => setIsSearchOpen(!isSearchOpen)}
-                  className={`p-2.5 rounded-xl transition-all active:scale-90 ${isScrolled ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' : 'bg-white/10 text-white backdrop-blur-md'}`}
+                  className={`p-2.5 rounded-xl transition-all active:scale-90 ${isSolid ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' : 'bg-white/10 text-white backdrop-blur-md'}`}
                 >
                   <Search className="h-5 w-5" />
                 </button>
                 <button 
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className={`p-2.5 rounded-xl transition-all active:scale-90 ${isScrolled ? 'bg-slate-900 text-white' : 'bg-emerald-600 text-white'}`}
+                  className={`p-2.5 rounded-xl transition-all active:scale-90 ${isSolid ? 'bg-slate-900 text-white' : 'bg-emerald-600 text-white'}`}
                 >
                   {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </button>
@@ -375,7 +488,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Mobile Search Overlay */}
           {isSearchOpen && (
-            <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 animate-in slide-in-from-top-1 shadow-2xl z-50">
+            <div className="lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 animate-in slide-in-from-top-1 shadow-2xl z-50">
               <div className="relative flex items-center gap-2">
                 <div className="relative flex-1">
                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-emerald-500" />
@@ -401,70 +514,135 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
-        {/* Fullscreen Mobile Menu Overlay */}
+        {/* Side Drawer Mobile Menu Overlay */}
         {isMenuOpen && (
-          <div className="md:hidden fixed inset-0 top-[64px] bg-white dark:bg-slate-900 z-[40] overflow-y-auto animate-in fade-in slide-in-from-bottom-5 duration-300">
-            <div className="p-6 space-y-8">
-              <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-600 mb-4">Navigation</p>
-                {navLinks.map(link => (
-                  <a 
-                    key={link.name} 
-                    href={link.href}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (link.id === 'home') handleHomeClick();
-                      else {
-                        setIsMenuOpen(false);
-                        const el = document.getElementById(link.id);
-                        if (el) el.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 group"
-                  >
-                    <span className="text-lg font-bold text-slate-900 dark:text-white">{link.name}</span>
-                    <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-emerald-500 transition-colors" />
-                  </a>
-                ))}
-                <button 
-                  onClick={() => { setIsMenuOpen(false); onOpenMap?.(); }}
-                  className="w-full flex items-center justify-between p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 group"
-                >
-                  <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-3">
-                    <Map className="h-5 w-5" /> Explore Map
-                  </span>
-                  <ChevronRight className="h-5 w-5 text-emerald-400" />
-                </button>
+          <div className="fixed inset-0 z-[60] lg:hidden">
+            {/* Dark Overlay - Closes menu on click */}
+            <div 
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-fade-in"
+              onClick={() => setIsMenuOpen(false)}
+            ></div>
+            
+            {/* Drawer Content - Positioned Right */}
+            <div 
+              className="absolute inset-y-0 right-0 w-[75%] max-w-[320px] bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 mobile-menu-slide-in-right flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Drawer Header */}
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+                 <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
+                       <Home className="h-5 w-5" />
+                    </div>
+                    <span className="font-serif font-bold text-lg text-slate-900 dark:text-white">Menu</span>
+                 </div>
+                 <button 
+                   onClick={() => setIsMenuOpen(false)}
+                   className="p-2 rounded-full bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors shadow-sm border border-slate-200 dark:border-slate-700"
+                 >
+                   <X className="h-5 w-5" />
+                 </button>
               </div>
 
-              <div className="space-y-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-600 mb-4">Account</p>
-                {isAuthenticated && user ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/50 mb-4">
-                        <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center text-white font-black text-xl">{user.name.charAt(0)}</div>
-                        <div>
-                           <p className="font-bold text-slate-900 dark:text-white">{user.name}</p>
-                           <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{user.role}</p>
-                        </div>
+              {/* Drawer Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                
+                {/* Navigation Links */}
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-600 mb-3 px-2">Explore</p>
+                  {navLinks.map(link => (
+                    <a 
+                      key={link.name} 
+                      href={link.href}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSectionClick(link.id);
+                      }}
+                      className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 group transition-colors"
+                    >
+                      <span className="text-base font-bold text-slate-700 dark:text-slate-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">{link.name}</span>
+                      <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                    </a>
+                  ))}
+                  <button 
+                    onClick={() => { setIsMenuOpen(false); onOpenMap?.(); }}
+                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 group transition-colors text-left"
+                  >
+                    <span className="text-base font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3">
+                       {t('nav.map')}
+                    </span>
+                    <Map className="h-4 w-4 text-emerald-500" />
+                  </button>
+                </div>
+
+                {/* Account / Logic Operations */}
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-600 mb-2 px-2">Account</p>
+                  
+                  {isAuthenticated && user ? (
+                    <div className="space-y-3">
+                      <div className="bg-slate-100 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 mb-4">
+                          <div className="flex items-center gap-3 mb-2">
+                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-lg overflow-hidden">
+                                {user.avatar ? (
+                                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  user.name.charAt(0)
+                                )}
+                             </div>
+                             <div className="min-w-0">
+                                <p className="font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
+                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{user.role}</p>
+                             </div>
+                          </div>
+                      </div>
+
+                      {user.role === 'admin' ? (
+                         <button onClick={() => { setIsMenuOpen(false); onOpenAdminDashboard?.(); }} className="w-full flex items-center gap-3 p-3 text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-500/10 rounded-xl transition-all">
+                           <ShieldCheck className="h-5 w-5" /> Admin Dashboard
+                         </button>
+                      ) : (
+                         <button onClick={() => { setIsMenuOpen(false); onOpenDashboard?.(); }} className="w-full flex items-center gap-3 p-3 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-500/10 rounded-xl transition-all">
+                           <Home className="h-5 w-5" /> Owner Portal
+                         </button>
+                      )}
+                      
+                      <button onClick={() => { setIsMenuOpen(false); onOpenProfile?.(); }} className="w-full flex items-center gap-3 p-3 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+                        <User className="h-5 w-5 text-slate-400" /> {t('nav.profile')}
+                      </button>
+                      
+                      <button onClick={() => { setIsMenuOpen(false); onOpenSettings?.(); }} className="w-full flex items-center gap-3 p-3 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+                        <Settings className="h-5 w-5 text-slate-400" /> {t('nav.settings')}
+                      </button>
+                      
+                      <div className="h-px bg-slate-100 dark:bg-slate-800 my-2"></div>
+                      
+                      <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all">
+                        <LogOut className="h-5 w-5" /> {t('nav.logout')}
+                      </button>
                     </div>
-                    <button onClick={() => { setIsMenuOpen(false); onOpenProfile?.(); }} className="w-full flex items-center gap-4 p-4 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all">
-                      <User className="h-5 w-5 text-emerald-500" /> {t('nav.profile')}
-                    </button>
-                    <button onClick={() => { setIsMenuOpen(false); onOpenSettings?.(); }} className="w-full flex items-center gap-4 p-4 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all">
-                      <Settings className="h-5 w-5 text-slate-500" /> {t('nav.settings')}
-                    </button>
-                    <div className="h-px bg-slate-100 dark:bg-slate-800 my-4"></div>
-                    <button onClick={handleLogout} className="w-full flex items-center gap-4 p-4 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-500/10 rounded-2xl transition-all">
-                      <LogOut className="h-5 w-5" /> {t('nav.logout')}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    <button onClick={() => { setIsMenuOpen(false); onOpenAuthModal?.(); }} className="p-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold rounded-2xl border border-slate-200 dark:border-slate-700 active:scale-95 transition-transform">{t('nav.login')}</button>
-                    <button onClick={() => { setIsMenuOpen(false); onOpenAuthModal?.(); }} className="p-4 bg-emerald-600 text-white font-black rounded-2xl shadow-lg active:scale-95 transition-transform uppercase tracking-widest text-xs">{t('nav.signup')}</button>
-                  </div>
-                )}
+                  ) : (
+                    <div className="space-y-3">
+                      <button 
+                        onClick={() => { setIsMenuOpen(false); onOpenAuthModal?.(); }} 
+                        className="w-full p-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold rounded-2xl border border-slate-200 dark:border-slate-700 active:scale-95 transition-transform flex items-center justify-center gap-2"
+                      >
+                        <LogIn className="h-4 w-4" /> {t('nav.login')}
+                      </button>
+                      <button 
+                        onClick={() => { setIsMenuOpen(false); onOpenAuthModal?.(); }} 
+                        className="w-full p-4 bg-emerald-600 text-white font-black rounded-2xl shadow-lg active:scale-95 transition-transform uppercase tracking-widest text-xs"
+                      >
+                        {t('nav.signup')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Drawer Footer */}
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-center">
+                 <p className="text-[10px] text-slate-400 font-medium">© 2024 Malnad Homes</p>
               </div>
             </div>
           </div>

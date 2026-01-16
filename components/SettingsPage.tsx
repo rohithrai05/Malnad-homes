@@ -1,15 +1,14 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Globe, Moon, Sun, Trash2, Bell, Shield, ChevronRight, X, ShieldCheck, Lock, Eye, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Globe, Trash2, Shield, ChevronRight, X, ShieldCheck, Lock, Eye, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from './Button';
 import { useAuth } from '../contexts/AuthContext';
-import { Language, AppTheme } from '../types';
+import { Language } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import { supabase } from '../lib/supabase';
 
 interface SettingsPageProps {
   onBack: () => void;
-  currentTheme: AppTheme;
-  onThemeChange: (theme: AppTheme) => void;
 }
 
 const PrivacyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
@@ -44,7 +43,7 @@ const PrivacyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
                      </li>
                      <li className="flex gap-4">
                         <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 text-[10px] font-bold">2</div>
-                        <p className="text-xs"><span className="font-bold text-slate-900 dark:text-white">Data Control:</span> You can clear your local footprint (favorites and history) at any time from the settings menu.</p>
+                        <p className="text-xs"><span className="font-bold text-slate-900 dark:text-white">Data Control:</span> You can clear your cloud footprint (listings and favorites) at any time from the settings menu.</p>
                      </li>
                   </ul>
                </div>
@@ -59,46 +58,90 @@ const PrivacyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
   );
 };
 
-const ConfirmModal: React.FC<{ isOpen: boolean; onConfirm: () => void; onCancel: () => void }> = ({ isOpen, onConfirm, onCancel }) => {
+const ConfirmModal: React.FC<{ isOpen: boolean; onConfirm: () => void; onCancel: () => void; isLoading?: boolean }> = ({ isOpen, onConfirm, onCancel, isLoading }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-in fade-in" onClick={onCancel}></div>
+      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-in fade-in" onClick={!isLoading ? onCancel : undefined}></div>
       <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl text-center animate-in zoom-in-95 duration-200">
          <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertTriangle className="h-8 w-8" />
+            {isLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : <AlertTriangle className="h-8 w-8" />}
          </div>
-         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Are You Sure?</h3>
-         <p className="text-slate-500 text-sm mb-8 leading-relaxed">This will permanently delete your favorites and booking history. This action cannot be undone.</p>
+         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{isLoading ? 'Deleting Data...' : 'Are You Sure?'}</h3>
+         <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+            {isLoading 
+              ? 'Please wait while we remove your listings and favorites from the database.'
+              : 'This will permanently delete your listings, favorites, and history from the cloud database. This cannot be undone.'}
+         </p>
          <div className="grid grid-cols-2 gap-4">
-            <Button variant="secondary" onClick={onCancel} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Cancel</Button>
-            <Button onClick={onConfirm} className="bg-red-600 hover:bg-red-500 border-transparent text-white">Yes, Clear</Button>
+            <Button variant="secondary" onClick={onCancel} disabled={isLoading} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Cancel</Button>
+            <Button onClick={onConfirm} disabled={isLoading} className="bg-red-600 hover:bg-red-500 border-transparent text-white">
+                {isLoading ? 'Processing...' : 'Yes, Delete All'}
+            </Button>
          </div>
       </div>
     </div>
   );
 };
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack, currentTheme, onThemeChange }) => {
+export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
   const { user } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const [notifications, setNotifications] = React.useState(true);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const handleClearData = () => {
     setIsConfirmOpen(true);
   };
 
-  const executeClearData = () => {
-    localStorage.removeItem('malnad_users_db');
-    localStorage.removeItem('malnad_dynamic_properties');
-    if (user) {
-      localStorage.removeItem(`malnad_favorites_${user.id}`);
+  const executeClearData = async () => {
+    setIsClearing(true);
+    try {
+      // Clear Local Storage
+      localStorage.removeItem('malnad_users_db');
+      localStorage.removeItem('malnad_dynamic_properties');
+      
+      if (user) {
+        localStorage.removeItem(`malnad_favorites_${user.id}`);
+
+        // 1. Delete User's Favorites
+        await supabase.from('favorites').delete().eq('user_id', user.id);
+
+        // 2. Delete User's Reviews
+        await supabase.from('reviews').delete().eq('user_id', user.id);
+
+        // 3. Delete User's Inquiries
+        await supabase.from('inquiries').delete().eq('user_id', user.id);
+
+        // 4. Handle User's Properties (Listings)
+        // First get IDs to clean up related data if FKs don't cascade
+        const { data: props } = await supabase.from('properties').select('id').eq('owner_id', user.id);
+        
+        if (props && props.length > 0) {
+            const propIds = props.map(p => p.id);
+            // Delete reviews on these properties
+            await supabase.from('reviews').delete().in('property_id', propIds);
+            // Delete favorites of these properties (by other users)
+            await supabase.from('favorites').delete().in('property_id', propIds);
+            // Delete inquiries on these properties
+            await supabase.from('inquiries').delete().in('property_id', propIds);
+            
+            // Delete the properties
+            await supabase.from('properties').delete().eq('owner_id', user.id);
+        }
+      }
+
+      alert("All your listings, favorites, and activity have been deleted from the database.");
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Error clearing data:", error);
+      alert("Failed to delete data: " + error.message);
+    } finally {
+      setIsClearing(false);
+      setIsConfirmOpen(false);
     }
-    setIsConfirmOpen(false);
-    alert("Local data cleared successfully.");
-    window.location.reload();
   };
 
   return (
@@ -117,33 +160,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack, currentTheme
 
         <div className="space-y-6">
           
-          {/* Appearance */}
+          {/* Appearance / Language */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <Sun className="h-5 w-5 text-amber-500" /> {t('settings.appearance')}
+                <Globe className="h-5 w-5 text-blue-500" /> {t('settings.appearance')}
             </h2>
             
-            <div className="flex items-center justify-between py-4 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{t('settings.theme')}</p>
-                    <p className="text-sm text-slate-500">{t('settings.themeDesc')}</p>
-                </div>
-                <div className="flex bg-slate-100 dark:bg-slate-950 rounded-lg p-1">
-                    <button 
-                        onClick={() => onThemeChange('light')}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${currentTheme === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                    >
-                        Light
-                    </button>
-                    <button 
-                         onClick={() => onThemeChange('dark')}
-                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${currentTheme === 'dark' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                    >
-                        Dark
-                    </button>
-                </div>
-            </div>
-
             <div className="flex items-center justify-between py-4">
                 <div>
                     <p className="font-medium text-slate-900 dark:text-white">{t('settings.language')}</p>
@@ -217,6 +239,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack, currentTheme
         isOpen={isConfirmOpen} 
         onConfirm={executeClearData} 
         onCancel={() => setIsConfirmOpen(false)} 
+        isLoading={isClearing}
       />
     </div>
   );

@@ -1,12 +1,10 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Upload, List, ChevronRight, BarChart3, CheckCircle, MapPin, Sparkles, Copy, Check, Home, Image as ImageIcon, Loader2, Info } from 'lucide-react';
+import { X, Upload, List, ChevronRight, BarChart3, CheckCircle, MapPin, Copy, Check, Home, Image as ImageIcon, Loader2, Info } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './Button';
-import { generateListingDescription } from '../services/geminiService';
 import { Property, PropertyCategory } from '../types';
-import { storage } from '../lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { supabase } from '../lib/supabase';
 
 interface OwnerDashboardModalProps {
   isOpen: boolean;
@@ -21,7 +19,7 @@ const COMMON_AMENITIES = [
 
 export const OwnerDashboardModal: React.FC<OwnerDashboardModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'upload' | 'listings' | 'stats' | 'optimizer'>('upload');
+  const [activeTab, setActiveTab] = useState<'upload' | 'listings' | 'stats'>('upload');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,14 +38,6 @@ export const OwnerDashboardModal: React.FC<OwnerDashboardModalProps> = ({ isOpen
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // AI Optimizer State
-  const [aiPropertyName, setAiPropertyName] = useState('');
-  const [aiFeatures, setAiFeatures] = useState('');
-  const [aiVibe, setAiVibe] = useState('Professional & Quiet');
-  const [aiResult, setAiResult] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiCopied, setAiCopied] = useState(false);
-
   if (!isOpen) return null;
 
   // Amenity Toggle Handler
@@ -63,7 +53,7 @@ export const OwnerDashboardModal: React.FC<OwnerDashboardModalProps> = ({ isOpen
   // Image Upload Handler
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     // Create a local preview
     const reader = new FileReader();
@@ -72,13 +62,21 @@ export const OwnerDashboardModal: React.FC<OwnerDashboardModalProps> = ({ isOpen
     };
     reader.readAsDataURL(file);
 
-    // Upload to Firebase
+    // Upload to Supabase Storage
     setUploadingImage(true);
     try {
-      const storageRef = ref(storage, `property_images/${user?.id}/${Date.now()}_${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      setFormData(prev => ({ ...prev, imageUrl: downloadURL }));
+      const fileName = `${user.id}/${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('property-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from('property-images')
+        .getPublicUrl(fileName);
+
+      setFormData(prev => ({ ...prev, imageUrl: urlData.publicUrl }));
     } catch (error) {
       console.error("Image upload failed:", error);
       alert("Failed to upload image. Please try again.");
@@ -142,23 +140,6 @@ export const OwnerDashboardModal: React.FC<OwnerDashboardModalProps> = ({ isOpen
     }, 1500);
   };
 
-  // AI Handlers
-  const handleAiGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!aiPropertyName || !aiFeatures) return;
-    
-    setAiLoading(true);
-    const desc = await generateListingDescription(aiPropertyName, aiFeatures, aiVibe);
-    setAiResult(desc);
-    setAiLoading(false);
-  };
-
-  const copyAiToClipboard = () => {
-    navigator.clipboard.writeText(aiResult);
-    setAiCopied(true);
-    setTimeout(() => setAiCopied(false), 2000);
-  };
-
   // Get user's properties (simulated from local storage for this user)
   const myProperties = (JSON.parse(localStorage.getItem('malnad_dynamic_properties') || '[]') as Property[]);
 
@@ -201,12 +182,6 @@ export const OwnerDashboardModal: React.FC<OwnerDashboardModalProps> = ({ isOpen
               className={`flex-shrink-0 md:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'stats' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white border border-transparent'}`}
             >
               <BarChart3 className="h-4 w-4" /> <span className="whitespace-nowrap">Analytics</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('optimizer')}
-              className={`flex-shrink-0 md:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'optimizer' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white border border-transparent'}`}
-            >
-              <Sparkles className="h-4 w-4" /> <span className="whitespace-nowrap">AI Optimizer</span>
             </button>
           </nav>
 
@@ -482,12 +457,12 @@ export const OwnerDashboardModal: React.FC<OwnerDashboardModalProps> = ({ isOpen
                       <p className="text-slate-500 text-xs uppercase font-bold mb-3">Total Views</p>
                       <p className="text-4xl font-bold text-slate-900 dark:text-white">0</p>
                    </div>
-                   <div className="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl">
-                      <p className="text-slate-500 text-xs uppercase font-bold mb-3">Inquiries</p>
+                   <div className="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center shadow-sm text-emerald-500">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Inquiries</p>
                       <p className="text-4xl font-bold text-emerald-500 dark:text-emerald-400">0</p>
                    </div>
-                   <div className="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl">
-                      <p className="text-slate-500 text-xs uppercase font-bold mb-3">Revenue (Est)</p>
+                   <div className="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center shadow-sm">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Revenue (Est)</p>
                       <p className="text-4xl font-bold text-slate-900 dark:text-white">₹0</p>
                    </div>
                 </div>
@@ -496,87 +471,6 @@ export const OwnerDashboardModal: React.FC<OwnerDashboardModalProps> = ({ isOpen
                    <p>Performance data will appear here once you have active listings.</p>
                 </div>
              </div>
-          )}
-
-          {activeTab === 'optimizer' && (
-            <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 pb-12">
-              <div className="mb-8">
-                <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 dark:text-amber-400 text-xs font-medium mb-3">
-                  <Sparkles className="h-3 w-3 mr-2" />
-                  AI For Landlords
-                </div>
-                <h2 className="text-3xl font-serif font-bold text-slate-900 dark:text-white mb-2">Listing Optimizer</h2>
-                <p className="text-slate-500 dark:text-slate-400">Struggling to describe your property? Let AI write a professional description that appeals to students and employees.</p>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-950/50 p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-800/50">
-                <form onSubmit={handleAiGenerate} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Property Name</label>
-                      <input 
-                        type="text" 
-                        value={aiPropertyName}
-                        onChange={(e) => setAiPropertyName(e.target.value)}
-                        placeholder="e.g. Green Valley PG"
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl py-3.5 px-5 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Target Tenant</label>
-                       <div className="relative">
-                        <select 
-                          value={aiVibe}
-                          onChange={(e) => setAiVibe(e.target.value)}
-                          className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl py-3.5 px-5 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer"
-                        >
-                          <option>Professional & Quiet</option>
-                          <option>Student Friendly & Budget</option>
-                          <option>Family & Safe</option>
-                          <option>Luxury & Serviced</option>
-                        </select>
-                        <ChevronRight className="absolute right-4 top-4 h-4 w-4 text-slate-500 rotate-90 pointer-events-none" />
-                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Key Features</label>
-                    <textarea 
-                      value={aiFeatures}
-                      onChange={(e) => setAiFeatures(e.target.value)}
-                      placeholder="e.g. 5 mins walk to bus stand, homemade food, 24/7 water, study table provided"
-                      rows={3}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-5 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 resize-none"
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full" isLoading={aiLoading}>
-                    Generate Description
-                  </Button>
-                </form>
-
-                {aiResult && (
-                  <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">AI Generated Result</h4>
-                      <button 
-                        onClick={copyAiToClipboard}
-                        className="flex items-center text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs transition-colors"
-                      >
-                        {aiCopied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-                        {aiCopied ? 'Copied' : 'Copy'}
-                      </button>
-                    </div>
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-                      <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line">
-                        {aiResult}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           )}
 
         </div>

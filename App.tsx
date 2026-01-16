@@ -19,6 +19,8 @@ import { useAuth } from './contexts/AuthContext';
 import { useUI } from './contexts/UIContext';
 import { AppTheme, Property } from './types';
 import { CustomCursor } from './components/CustomCursor';
+import { Chatbot } from './components/Chatbot';
+import { ArrowUp } from 'lucide-react';
 
 interface SearchState {
   query: string;
@@ -36,27 +38,53 @@ function App() {
   const [activePropertyForContact, setActivePropertyForContact] = useState<Property | null>(null);
   
   const [view, setView] = useState<ViewState>('home');
+  const [lastView, setLastView] = useState<ViewState>('home'); // Track previous view for back navigation
   const [searchState, setSearchState] = useState<SearchState>({ query: '', location: null });
+  const [showScrollTop, setShowScrollTop] = useState(false);
   
   // Initialize theme from localStorage or default to dark
   const [theme, setTheme] = useState<AppTheme>(() => {
-    return (localStorage.getItem('malnad_theme') as AppTheme) || 'dark';
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('malnad_theme') as AppTheme;
+      return saved || 'dark';
+    }
+    return 'dark';
   });
 
+  // Robust Theme Effect
   useEffect(() => {
     const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+    root.style.colorScheme = theme;
     localStorage.setItem('malnad_theme', theme);
-    if (theme === 'dark') {
-        root.classList.add('dark');
-        root.classList.remove('light');
-    } else {
-        root.classList.remove('dark');
-        root.classList.add('light');
-    }
+    window.dispatchEvent(new Event('theme-change'));
   }, [theme]);
 
+  // Scroll to top detection
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // View Navigation Scroll Logic
+  useEffect(() => {
+    // We strictly control scrolling:
+    // 1. If entering Property Details, scroll to top.
+    // 2. If entering any other page (except Home), scroll to top.
+    // 3. If returning to Home, we DO NOT auto-scroll here. The trigger (nav click or back button) handles it.
+    if (view === 'property-details') {
+       window.scrollTo(0, 0);
+    } else if (view !== 'home') {
+       window.scrollTo(0, 0);
+    }
   }, [view]);
 
   // Universal Auth Guard
@@ -72,12 +100,24 @@ function App() {
     }
   }, [view, isAuthenticated, selectedProperty]);
 
-  const resetToHome = () => {
+  const resetToHome = (sectionId?: string) => {
     setView('home');
     setSelectedProperty(null);
     setActivePropertyForContact(null);
     setSearchState({ query: '', location: null });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // If a section ID is provided, scroll to it after a brief delay to allow rendering
+    if (sectionId && typeof sectionId === 'string') {
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      // Explicitly scroll to top when user clicks Home / Logo
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleSearch = (query: string, location?: { lat: number; lng: number }) => {
@@ -104,9 +144,23 @@ function App() {
   };
 
   const handleViewProperty = (property: Property) => {
+    setLastView(view); // Store current view before navigating
     setSelectedProperty(property);
     setView('property-details');
     setIsMapOpen(false);
+  };
+
+  const handleBackFromDetails = () => {
+    setView(lastView);
+    if (lastView === 'home') {
+      // If returning to home, explicitly scroll to places section
+      setTimeout(() => {
+        const placesSection = document.getElementById('places');
+        if (placesSection) {
+          placesSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   };
 
   const renderContent = () => {
@@ -114,7 +168,10 @@ function App() {
       case 'all-listings':
         return (
           <AllPropertiesPage 
-            onBack={() => setView('home')} 
+            onBack={() => {
+               setView('home');
+               window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} 
             initialSearchState={searchState}
             onViewProperty={handleViewProperty}
           />
@@ -122,27 +179,37 @@ function App() {
       case 'profile':
         return isAuthenticated ? (
           <ProfilePage 
-            onBack={() => setView('home')} 
+            onBack={() => {
+               setView('home');
+               window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} 
             onViewProperty={handleViewProperty} 
           />
         ) : null;
       case 'settings':
         return (
           <SettingsPage 
-            onBack={() => setView('home')} 
-            currentTheme={theme} 
-            onThemeChange={setTheme} 
+            onBack={() => {
+               setView('home');
+               window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} 
           />
         );
       case 'owner-dashboard':
-        return isAuthenticated ? <OwnerDashboardPage onBack={() => setView('home')} /> : null;
+        return isAuthenticated ? <OwnerDashboardPage onBack={() => {
+               setView('home');
+               window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} /> : null;
       case 'admin-dashboard':
-        return isAuthenticated ? <AdminDashboardPage onBack={() => setView('home')} /> : null;
+        return isAuthenticated ? <AdminDashboardPage onBack={() => {
+               setView('home');
+               window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} /> : null;
       case 'property-details':
         return selectedProperty ? (
           <PropertyDetailsPage 
             property={selectedProperty} 
-            onBack={() => setView('home')} 
+            onBack={handleBackFromDetails} 
             onReserve={handleReserve} 
           />
         ) : null;
@@ -183,6 +250,7 @@ function App() {
         }}
         onOpenSettings={() => setView('settings')}
         onOpenAuthModal={openAuthModal}
+        alwaysSolid={view !== 'home'}
       />
       
       <main className="min-h-screen">
@@ -191,6 +259,8 @@ function App() {
 
       <Footer />
 
+      <Chatbot />
+
       <MapModal 
         isOpen={isMapOpen}
         onClose={() => setIsMapOpen(false)}
@@ -198,6 +268,14 @@ function App() {
       />
 
       <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} />
+      
+      <button
+        onClick={scrollToTop}
+        className={`fixed bottom-24 right-6 z-40 p-3 rounded-full bg-slate-900/80 dark:bg-white/80 backdrop-blur-md text-white dark:text-slate-900 shadow-lg border border-white/10 transition-all duration-300 transform hover:scale-110 active:scale-95 ${showScrollTop ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}
+        aria-label="Scroll to top"
+      >
+        <ArrowUp className="h-5 w-5" />
+      </button>
     </div>
   );
 }

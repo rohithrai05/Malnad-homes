@@ -13,11 +13,11 @@ export const properties: Property[] = [
     price: "₹8,500",
     priceValue: 8500,
     rating: 4.8,
-    mainImage: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://websiteupload.s3.ap-south-1.amazonaws.com/media/2024/07/6617bb86d89551.webp",
     galleryImages: [
-      "https://images.unsplash.com/photo-1598228723793-52759bba239c?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&q=80&w=800"
+      "https://img1.wsimg.com/isteam/ip/a043541a-f9ac-468b-87bb-b3fc27f0aed0/WhatsApp%20Image%202025-06-18%20at%2010.44.26_085b1637.jpg",
+      "https://www.baseragirlspg.com/img/gallery/study-desk.jpg",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPLz13fzObe1vqDFKOG5NP7N0QLFuqY4YiLg&s"
     ],
     description: "A peaceful heritage home converted into a co-living space for remote workers and postgraduate students. Surrounded by plantations, it offers a quiet environment for deep work and study. \n\nFeatures shared common areas and high-speed internet, fostering a small community of like-minded professionals.",
     amenities: ["High-Speed Wi-Fi", "Home Cooked Meals", "Quiet Study Zones", "Parking", "Power Backup", "Housekeeping"],
@@ -39,11 +39,11 @@ export const properties: Property[] = [
     price: "₹12,000",
     priceValue: 12000,
     rating: 4.5,
-    mainImage: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://asset-cdn.stanzaliving.com/stanza-living/image/upload/f_auto,q_auto,w_600/e_improve/e_sharpen:10/e_saturation:10/f_auto,q_auto/v1655385044/Website/CMS-Uploads/f7zygwwoqcpahgsbnhjo.jpg",
     galleryImages: [
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1484154218962-a1c002085d2f?auto=format&fit=crop&q=80&w=800"
+      "https://images.nobroker.in/images/8aa9bc199b6d35a1019b6e2c8c735a5b/8aa9bc199b6d35a1019b6e2c8c735a5b_51124_964354_medium.jpg",
+      "https://meridianstays.in/location/img/four-sharing-proxima-marol.webp",
+      "https://cdn.shopify.com/s/files/1/1233/0208/files/AMb_1_480x480.png?v=1628250438"
     ],
     description: "Located in the bustling heart of Darbar, these serviced apartments are perfect for corporate employees. Quick access to Puttur's bus stand and major banks. \n\nEnjoy hassle-free living with cleaning services and modern furnishings included.",
     amenities: ["AC Rooms", "Fiber Internet", "Work Desk", "Room Service", "Laundry", "Elevator"],
@@ -65,11 +65,11 @@ export const properties: Property[] = [
     price: "₹4,500",
     priceValue: 4500,
     rating: 4.2,
-    mainImage: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://s3-us-west-2.amazonaws.com/issuewireassets/primg/40473/dual-occupancy-edited1649737864.jpg",
     galleryImages: [
-      "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&q=80&w=800"
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMRyj_9AB0BXbxdH8dCAfClqUzrH2qO6cCFQ&s",
+      "https://content.jdmagicbox.com/comp/jodhpur/i6/0291px291.x291.231019152422.x1i6/catalogue/manasvi-girls-hostel-air-force-area-jodhpur-hostels-131ifnvqlu.jpg",
+      "https://nestaway-houses-assets.nestaway.com/uploads/images/thumb_large_0e9535b4-1d2f-49f8-8836-0a5d03d7956c.gif"
     ],
     description: "Situated in the educational hub of Nehrunagar, this PG is walking distance from St. Philomena College and other institutions. \n\nDesigned specifically for students, offering a disciplined yet comfortable environment with healthy food options.",
     amenities: ["Study Desk", "Wi-Fi", "Washing Machine", "Mess Facility", "CCTV Security", "24/7 Water"],
@@ -91,11 +91,11 @@ export const properties: Property[] = [
     price: "₹18,000",
     priceValue: 18000,
     rating: 4.9,
-    mainImage: "https://images.unsplash.com/photo-1600596542815-e495e913193d?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://images.jdmagicbox.com/v2/comp/jodhpur/f4/0291px291.x291.250825120711.t9f4/catalogue/the-unique-pg-hostel-basni-jodhpur-paying-guest-accommodations-805pbblpbv.jpg",
     galleryImages: [
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=800"
+      "https://ap-south-1.graphassets.com/cmdpk61eo00do08l54vb2d7wl/cmd01b8hv1frc07pm4xveeyul",
+      "https://www.thehivehostels.com/uploads/images/1658301040_7796f3aa4d7819a2f5d5.jpeg",
+      "https://gsh-cdn.sgp1.cdn.digitaloceanspaces.com/assets/img/no-broker-indore/PRT834/room-on-rent-in-indore/pg-in-new-gayatri-nagar_1713337408.jpg"
     ],
     description: "A spacious villa suitable for a group of colleagues or a family relocating to Puttur. \n\nFeatures large shared spaces, a kitchen for self-cooking, and a garden. Located in a safe residential neighborhood.",
     amenities: ["Private Garden", "Full Kitchen", "Parking (4 cars)", "Inverter Backup", "Pet Friendly"],
@@ -117,11 +117,11 @@ export const properties: Property[] = [
     price: "₹3,500",
     priceValue: 3500,
     rating: 4.3,
-    mainImage: "https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://content.jdmagicbox.com/v2/comp/pune/m4/020pxx20.xx20.230603163609.l4m4/catalogue/neelambari-girls-pg-hostel-sadashiv-peth-pune-hostels-43q0tc07p2.jpg",
     galleryImages: [
-      "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800"
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNBSCi03DslFWRzqXFBGGfCLDc6zSB-GxGPQ&s",
+      "https://threebestrated.in/images/AnuGirlsHostel-Lucknow-UP.jpeg",
+      "https://imagecdn.99acres.com/media1/34604/3/692083903M-1767011070667.jpg"
     ],
     description: "Strategically located near the railway station. Ideal for daily commuters or employees working in the industrial area. \n\nBudget-friendly accommodation with clean basic amenities and transport connectivity.",
     amenities: ["Near Railway Station", "Filtered Water", "Single Beds", "Bike Parking", "Budget Friendly"],
@@ -143,11 +143,11 @@ export const properties: Property[] = [
     price: "₹10,500",
     priceValue: 10500,
     rating: 4.6,
-    mainImage: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://metrocityliving.com/wp-content/uploads/2025/03/metrocity-girls-hostel-with-triple-sharing-bed-in-kothrud-pune.jpg",
     galleryImages: [
-      "https://images.unsplash.com/photo-1502005229766-939760a58531?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&q=80&w=800"
+      "https://meridianstays.in/location/img/four-sharing-proxima-marol.webp",
+      "https://asset-cdn.stanzaliving.com/stanza-living/image/upload/f_auto,q_auto,w_600/e_improve/e_sharpen:10/e_saturation:10/f_auto,q_auto/v1655385044/Website/CMS-Uploads/f7zygwwoqcpahgsbnhjo.jpg",
+      "https://gsh-cdn.sgp1.cdn.digitaloceanspaces.com/assets/img/no-broker-indore/PRT834/room-on-rent-in-indore/pg-in-new-gayatri-nagar_1713337408.jpg"
     ],
     description: "A modern 2BHK flat in Bolwar. Ideal for small families or two professionals sharing. \n\nClose to supermarkets and gyms. The building has security and dedicated parking.",
     amenities: ["Modular Kitchen", "Washing Machine", "Power Backup", "Gym Access", "Covered Parking"],
@@ -169,11 +169,11 @@ export const properties: Property[] = [
     price: "₹7,500",
     priceValue: 7500,
     rating: 4.7,
-    mainImage: "https://images.unsplash.com/photo-1585543805890-6051f7829f98?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://www.srcspatna.com/images/Hostel-Facility/Hostel_Facility_banner.jpg",
     galleryImages: [
-      "https://images.unsplash.com/photo-1542718610-a1d656d1884c?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1461988320302-91badd636367?auto=format&fit=crop&q=80&w=800"
+      "https://websiteupload.s3.ap-south-1.amazonaws.com/media/2024/07/6617bb86d89551.webp",
+      "https://img1.wsimg.com/isteam/ip/a043541a-f9ac-468b-87bb-b3fc27f0aed0/WhatsApp%20Image%202025-06-18%20at%2010.44.26_085b1637.jpg",
+      "https://cdn.shopify.com/s/files/1/1233/0208/files/AMb_1_480x480.png?v=1628250438"
     ],
     description: "A quiet cottage for those who prefer nature over city noise. Great for writers or students preparing for exams. \n\nAffordable rent with basic amenities. Own vehicle recommended.",
     amenities: ["Fruit Orchard", "Silence", "Water Heater", "Nature Trails", "Yoga Space"],
@@ -195,11 +195,11 @@ export const properties: Property[] = [
     price: "₹5,000",
     priceValue: 5000,
     rating: 4.4,
-    mainImage: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNBSCi03DslFWRzqXFBGGfCLDc6zSB-GxGPQ&s",
     galleryImages: [
-      "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&q=80&w=800"
+      "https://threebestrated.in/images/AnuGirlsHostel-Lucknow-UP.jpeg",
+      "https://content.jdmagicbox.com/comp/jodhpur/i6/0291px291.x291.231019152422.x1i6/catalogue/manasvi-girls-hostel-air-force-area-jodhpur-hostels-131ifnvqlu.jpg",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTDrikdBU9R9ZbVBAtOoeG7p__tXvj8IGPbA&s"
     ],
     description: "A secure women's hostel right on Main Road. Very close to colleges and bus stops. \n\nFeatures 24/7 security guard, CCTV, and hygienic mess food included in rent.",
     amenities: ["24/7 Security", "Mess Included", "Warden", "Study Hall", "Hot Water"],
@@ -221,11 +221,11 @@ export const properties: Property[] = [
     price: "₹6,000",
     priceValue: 6000,
     rating: 4.9,
-    mainImage: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://meridianstays.in/location/img/four-sharing-proxima-marol.webp",
     galleryImages: [
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&q=80&w=800"
+      "https://images.nobroker.in/images/8aa9bc199b6d35a1019b6e2c8c735a5b/8aa9bc199b6d35a1019b6e2c8c735a5b_51124_964354_medium.jpg",
+      "https://s3-us-west-2.amazonaws.com/issuewireassets/primg/40473/dual-occupancy-edited1649737864.jpg",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPLz13fzObe1vqDFKOG5NP7N0QLFuqY4YiLg&s"
     ],
     description: "Affordable shared accommodation in Padnoor. \n\nGreat for students looking for a low-cost option with plenty of open space. Peaceful environment.",
     amenities: ["Field View", "Shared Kitchen", "Bicycle Parking", "Local Cuisine", "Open Deck"],
@@ -247,11 +247,11 @@ export const properties: Property[] = [
     price: "₹6,500",
     priceValue: 6500,
     rating: 4.6,
-    mainImage: "https://images.unsplash.com/photo-1449156493391-d2cfa28e468b?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://www.sunlighthostel.com/wp-content/uploads/2025/02/Mens-PG-Sunlight-Hostel.jpg",
     galleryImages: [
-      "https://images.unsplash.com/photo-1472224371017-08207f84aaae?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1505577058444-a3dab90d87b7?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1518732656745-d41c44e5627d?auto=format&fit=crop&q=80&w=800"
+      "https://www.thehivehostels.com/uploads/images/1658301040_7796f3aa4d7819a2f5d5.jpeg",
+      "https://ap-south-1.graphassets.com/cmdpk61eo00do08l54vb2d7wl/cmd01b8hv1frc07pm4xveeyul",
+      "https://gsh-cdn.sgp1.cdn.digitaloceanspaces.com/assets/img/no-broker-indore/PRT834/room-on-rent-in-indore/pg-in-new-gayatri-nagar_1713337408.jpg"
     ],
     description: "Compact studio apartment in Mundoor. \n\nIdeal for a single professional. Comes with a small kitchenette and attached bath. Private and secure.",
     amenities: ["Kitchenette", "Private Terrace", "Work Chair", "Pet Friendly", "Water Heater"],
@@ -273,11 +273,11 @@ export const properties: Property[] = [
     price: "₹4,000",
     priceValue: 4000,
     rating: 4.8,
-    mainImage: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://ap-south-1.graphassets.com/cmdpk61eo00do08l54vb2d7wl/cmd01b8hv1frc07pm4xveeyul",
     galleryImages: [
-      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800"
+      "https://content.jdmagicbox.com/v2/comp/pune/m4/020pxx20.xx20.230603163609.l4m4/catalogue/neelambari-girls-pg-hostel-sadashiv-peth-pune-hostels-43q0tc07p2.jpg",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMRyj_9AB0BXbxdH8dCAfClqUzrH2qO6cCFQ&s",
+      "https://nestaway-houses-assets.nestaway.com/uploads/images/thumb_large_0e9535b4-1d2f-49f8-8836-0a5d03d7956c.gif"
     ],
     description: "Premium men's PG in Aryapu with gym and recreation room. \n\nAttracts young professionals and students. Clean rooms with daily housekeeping.",
     amenities: ["Gym", "Recreation Room", "High Speed Wifi", "Washing Machine", "Biometric Entry"],
@@ -299,11 +299,11 @@ export const properties: Property[] = [
     price: "₹9,000",
     priceValue: 9000,
     rating: 4.5,
-    mainImage: "https://images.unsplash.com/photo-1598928636135-d146006ff4be?auto=format&fit=crop&q=80&w=800",
+    mainImage: "https://imagecdn.99acres.com/media1/34733/13/694673045M-1767603026864.jpg",
     galleryImages: [
-      "https://images.unsplash.com/photo-1592595896551-12b371d546d5?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?auto=format&fit=crop&q=80&w=800",
-      "https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?auto=format&fit=crop&q=80&w=800"
+      "https://www.baseragirlspg.com/img/gallery/study-desk.jpg",
+      "https://metrocityliving.com/wp-content/uploads/2025/03/metrocity-girls-hostel-with-triple-sharing-bed-in-kothrud-pune.jpg",
+      "https://res.cloudinary.com/flivin-homes/image/upload/v1616668696/Website/Prague_Homes/flivinhomes_happyHome4_mhxcyq.jpg"
     ],
     description: "An independent house in Chikkamudnoor available for rent. \n\nQuiet neighborhood, perfect for a family. Close to schools and local market.",
     amenities: ["Car Parking", "Garden", "Semi-Furnished", "24/7 Water", "Family Friendly"],

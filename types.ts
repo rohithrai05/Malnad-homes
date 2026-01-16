@@ -82,6 +82,7 @@ export interface PropertyOwner {
 
 export interface Property {
   id: string;
+  owner_id?: string; // Link to the User ID of the owner
   title: string;
   location: string;
   category: PropertyCategory;
@@ -105,4 +106,5 @@ export interface Property {
   };
   status?: PropertyStatus; // Optional for backward compatibility with static data
   owner?: PropertyOwner;
+  distance?: number;
 }
